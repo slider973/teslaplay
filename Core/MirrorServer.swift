@@ -5,7 +5,8 @@ import CryptoKit
 /// Serveur HTTP/WebSocket minimal (Network.framework) écoutant sur 0.0.0.0:<port>.
 ///
 /// Routes :
-///   GET /        → lecteur H.264 (MSE + WebSocket), repli automatique vers /mjpeg
+///   GET /        → accueil : recopie d'écran + raccourcis vers les services lus par la voiture
+///   GET /mirror  → lecteur H.264 (MSE + WebSocket), repli automatique vers /mjpeg
 ///   GET /mjpeg   → page MJPEG (<img src="/stream">)
 ///   GET /stream  → flux multipart/x-mixed-replace (JPEG)
 ///   GET /ws      → WebSocket : texte {"type":"init","codec":…} puis init segment fMP4, puis fragments
@@ -207,6 +208,8 @@ final class MirrorServer {
 
         switch path {
         case "/", "/index.html":
+            respond(conn, status: "200 OK", type: "text/html; charset=utf-8", body: Data(WebPages.home.utf8))
+        case "/mirror":
             respond(conn, status: "200 OK", type: "text/html; charset=utf-8", body: Data(WebPages.player.utf8))
         case "/mjpeg":
             respond(conn, status: "200 OK", type: "text/html; charset=utf-8", body: Data(WebPages.mjpeg.utf8))

@@ -27,10 +27,12 @@ Le dossier `Core/` est compilé dans l'extension. Il n'utilise ni ReplayKit ni U
 
 | Route | Contenu |
 |---|---|
-| `/` | **V2** : lecteur H.264. WebSocket `/ws` → fMP4 → Media Source Extensions. Bascule automatiquement sur `/mjpeg` si MSE ou le codec n'est pas disponible, ou si rien n'est décodé au bout de 10 s. |
+| `/` | Accueil : bouton « Recopier l'écran » et raccourcis vers Netflix, YouTube, Disney+… Ces services sont protégés par DRM (noirs en recopie, iOS l'impose), ils sont donc ouverts et lus **directement par le navigateur de la voiture**. |
+| `/mirror` | **V2** : lecteur H.264. WebSocket `/ws` → fMP4 → Media Source Extensions. Bascule automatiquement sur `/mjpeg` si MSE ou le codec n'est pas disponible, ou si rien n'est décodé au bout de 10 s. |
 | `/mjpeg` | **V1** : `<img src="/stream">` plein écran |
 | `/stream` | flux `multipart/x-mixed-replace` (JPEG) |
 | `/ws` | WebSocket. Le serveur envoie d'abord un message texte `{"type":"init","codec":"avc1.…"}`, puis l'init segment en binaire, puis un fragment fMP4 par image. |
+| `/health` | répond `ok` |
 | `/status` | JSON : rotation, nombre de clients, codec, résolution |
 
 WebCodecs n'est pas utilisé : il exige un contexte sécurisé (HTTPS ou localhost), ce que `http://172.20.10.1` n'est pas. MSE n'a pas cette contrainte.
@@ -73,7 +75,7 @@ Prérequis : Xcode 15 ou plus récent, un iPhone sous iOS 17+ et un compte déve
 2. Dans TeslaMirror, sélectionnez « Wi‑Fi — 192.168.x.y » dans le menu Réseau.
 3. Touchez **Démarrer la diffusion**, choisissez *TeslaMirror*, puis *Démarrer la diffusion*. Le compte à rebours de 3 s s'affiche, puis la pastille rouge apparaît.
 4. Si iOS demande l'accès au réseau local, acceptez.
-5. Dans Safari sur le Mac, ouvrez `http://192.168.x.y:8080`. L'écran de l'iPhone doit s'afficher en H.264. L'indicateur en haut à gauche, qui s'affiche quand on touche la page, montre le codec.
+5. Dans Safari sur le Mac, ouvrez `http://192.168.x.y:8080` puis « Recopier l'écran de l'iPhone ». L'écran de l'iPhone doit s'afficher en H.264. L'indicateur en haut à gauche, qui s'affiche quand on touche la page, montre le codec.
 6. Ouvrez `http://192.168.x.y:8080/mjpeg` pour vérifier la V1.
 7. Points à vérifier :
    - **latence** : faites défiler une page sur l'iPhone. Attendez moins de 0,5 s en H.264, et plus en MJPEG.
@@ -117,3 +119,9 @@ Le harnais compile `Core/` pour macOS et injecte des images synthétiques en 117
 brew install xcodegen
 xcodegen generate
 ```
+
+## Netflix et autres services protégés
+
+iOS met en noir toute vidéo protégée par DRM (Netflix, Disney+, Prime Video, Apple TV+…) dans une recopie d'écran, y compris pour son propre enregistreur d'écran. Seuls les sous-titres restent visibles, et le son reste sur le téléphone. Aucune app de recopie ne peut contourner cela.
+
+Les apps CarPlay comme CarTV n'ont pas ce problème, car elles ne recopient pas l'écran : elles lisent la vidéo elles-mêmes et la dessinent sur l'écran CarPlay, qu'iOS gère comme un second écran. La Tesla n'est pas un écran de l'iPhone. L'équivalent consiste donc à faire lire la vidéo **par le navigateur de la voiture**, et c'est le rôle des raccourcis de la page d'accueil. Pour Netflix, l'app *Theater* intégrée à la Tesla reste l'option la plus fiable.

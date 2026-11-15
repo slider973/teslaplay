@@ -68,6 +68,49 @@ enum WebPages {
     pollStatus(); showHud();
     """#
 
+    // MARK: - Accueil
+
+    /// Les services protégés (DRM) sont noirs en recopie d'écran : ils doivent être lus
+    /// directement par le navigateur de la voiture (comme CarTV le fait sur l'écran CarPlay).
+    static let home = #"""
+    <!doctype html>
+    <html lang="fr"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>TeslaMirror</title>
+    <style>
+      html,body{margin:0;background:#111;color:#eee;font-family:-apple-system,Helvetica,Arial,sans-serif}
+      main{max-width:1100px;margin:0 auto;padding:28px 16px}
+      h1{margin:0 0 4px;font-size:30px} h2{font-size:20px;margin:30px 0 6px}
+      p{color:#999;margin:0 0 14px;font-size:16px}
+      .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+      a.tile{display:flex;align-items:center;justify-content:center;min-height:96px;border-radius:16px;
+             background:#222;border:1px solid #333;color:#fff;text-decoration:none;font-size:22px;font-weight:600;text-align:center;padding:10px}
+      a.main{background:#c62828;border-color:#e53935;font-size:26px;min-height:120px}
+      a.alt{background:#1e1e1e;font-size:18px}
+    </style></head><body><main>
+    <h1>TeslaMirror</h1>
+    <p>Usage à l'arrêt uniquement.</p>
+
+    <div class="grid">
+      <a class="tile main" href="/mirror">Recopier l'écran de l'iPhone</a>
+      <a class="tile alt" href="/mjpeg">Recopie (mode compatibilité)</a>
+    </div>
+
+    <h2>Films et séries</h2>
+    <p>Ces services sont protégés et apparaissent en noir en recopie. Ils sont lus ici directement par la voiture, avec le son sur les haut-parleurs.</p>
+    <div class="grid">
+      <a class="tile" href="https://www.netflix.com/browse">Netflix</a>
+      <a class="tile" href="https://www.youtube.com/">YouTube</a>
+      <a class="tile" href="https://www.disneyplus.com/">Disney+</a>
+      <a class="tile" href="https://www.primevideo.com/">Prime Video</a>
+      <a class="tile" href="https://www.molotov.tv/">Molotov</a>
+      <a class="tile" href="https://www.rts.ch/play/tv">Play RTS</a>
+      <a class="tile" href="https://www.twitch.tv/">Twitch</a>
+      <a class="tile" href="https://tv.apple.com/">Apple TV+</a>
+    </div>
+    </main></body></html>
+    """#
+
     // MARK: - V1 : MJPEG
 
     static let mjpeg = #"""
@@ -79,7 +122,7 @@ enum WebPages {
     </head><body>
     <div id="msg">En attente de l'iPhone…</div>
     <img id="m" src="/stream" alt="">
-    <div id="hud"><button id="rot">↻</button><button id="fs">Plein écran</button><a href="/?force=1">H.264</a><span id="info">MJPEG</span></div>
+    <div id="hud"><button id="rot">↻</button><button id="fs">Plein écran</button><a href="/mirror">H.264</a><span id="info">MJPEG</span></div>
     <script>
     """# + commonScript + #"""
     var img = $('m');

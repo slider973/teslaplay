@@ -48,7 +48,7 @@ struct ContentView: View {
                             .frame(width: 220, height: 220).padding(12)
                             .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    Text("/ = H.264 (faible latence) · /mjpeg = MJPEG (compatibilité)")
+                    Text("Accueil : recopie d'écran + Netflix, YouTube… lus directement par la voiture")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
 
