@@ -10,6 +10,28 @@ let seconds = Double(args.count > 2 ? args[2] : "60") ?? 60
 let dumpPath = args.count > 3 ? args[3] : nil
 
 let pipeline = MirrorPipeline(port: port)
+let env = ProcessInfo.processInfo.environment
+// Lecteur intégré : fichiers statiques + configuration média (à la place de l'App Group).
+pipeline.server.webRoot = URL(fileURLWithPath: env["TM_WEBROOT"] ?? "Web")
+if let dir = env["TM_MEDIA_DIR"] {
+    let mediaDir = URL(fileURLWithPath: dir)
+    try? FileManager.default.createDirectory(at: mediaDir, withIntermediateDirectories: true)
+    MediaConfig.overrideDirectory = mediaDir
+    if let m3u = env["TM_M3U"] {
+        let source = m3u.hasPrefix("http") ? URL(string: m3u)! : URL(fileURLWithPath: m3u)
+        let sem = DispatchSemaphore(value: 0)
+        Task {
+            do {
+                var local = source
+                if !source.isFileURL { local = try await URLSession.shared.download(from: source).0 }
+                let r = try await M3UParser.parse(fileAt: local, outputDirectory: mediaDir)
+                print("M3U : \(r.channels) chaînes, \(r.groups) groupes")
+            } catch { print("M3U erreur : \(error)") }
+            sem.signal()
+        }
+        sem.wait()
+    }
+}
 var dump = Data()
 var initCount = 0, keyCount = 0, fragCount = 0
 pipeline.onInitSegment = { s in

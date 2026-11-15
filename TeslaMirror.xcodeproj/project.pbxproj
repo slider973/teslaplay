@@ -8,18 +8,27 @@
 
 /* Begin PBXBuildFile section */
 		03E5F05FE83681A440B5B0E1 /* FMP4Muxer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 462911B144B89905C7022BA8 /* FMP4Muxer.swift */; };
+		0DB9E8AA38E112ADD13F8270 /* PlexService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70156AF5D5B3B7010FF0FE4 /* PlexService.swift */; };
 		118123961F40AC1631CB2187 /* NetworkInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BBA4887D2CA6B7DBB34128 /* NetworkInfo.swift */; };
+		2238001FB52C1ED3359F2BE1 /* Relay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CDCB8ECEB86D5210918C69A /* Relay.swift */; };
 		2761440120A0C9F18F25B982 /* JPEGEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFAD6C2D3021CDC1FEE018BF /* JPEGEncoder.swift */; };
 		2D942BB52C80247BF4E221CC /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A537795603F9043B1B528F /* SampleHandler.swift */; };
+		35CBDC02B1EF5EEA238A3A1B /* MediaConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C916E455151BBE6C685A65B /* MediaConfig.swift */; };
 		37AAFAD787DC0D5CB7D6FB00 /* TeslaMirrorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */; };
 		3ECD4E3A26C9E1345503D7CF /* SharedStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */; };
+		442A6E3059B010E1F86DDA91 /* Web in Resources */ = {isa = PBXBuildFile; fileRef = 700673281523D940262ADF2E /* Web */; };
 		4602E2991C3D32223C548EB7 /* WebPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A2B9CD069594AC0B870C2A /* WebPages.swift */; };
+		4D9ADE62B5444867A52D8902 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */; };
 		4F2DA9958156D0AB952F11A1 /* TeslaMirrorBroadcast.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D634B6B58D5E09DF158E2A65 /* TeslaMirrorBroadcast.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		55B79058061353E6DB5ECC4F /* MediaConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C916E455151BBE6C685A65B /* MediaConfig.swift */; };
 		79E3ED29CC573609BD508328 /* LocalNetworkPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */; };
 		8527D1EEFC750FC4D0F13DB8 /* BroadcastPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B48B274ED4502E642F0AD06 /* BroadcastPicker.swift */; };
 		92691362BA911E208E3A176E /* MirrorPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C25B67E49C70AEAD86FE95 /* MirrorPipeline.swift */; };
+		B43CD65B9558AE276624621B /* IPTVSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E903901274461CEA2D5DE6C1 /* IPTVSettingsView.swift */; };
 		C307DE8EA201AEED92536161 /* MirrorServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F2C2790D7A24DB3CB93184 /* MirrorServer.swift */; };
+		C916ED0B5BB6D40636068425 /* PlexSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F15A4F64A80A94476FDCB9 /* PlexSettingsView.swift */; };
 		D9D06C09FA1D8A1EFA7933E7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */; };
+		F17087491AD8F28BBA868A09 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */; };
 		F23B273972042EF3842F7976 /* SharedStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */; };
 		FE535A92B933ED98BFB79DAA /* H264Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB32D61F9059CBD8AFEDFFC5 /* H264Encoder.swift */; };
 /* End PBXBuildFile section */
@@ -54,19 +63,26 @@
 		1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaMirrorApp.swift; sourceTree = "<group>"; };
 		37A537795603F9043B1B528F /* SampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleHandler.swift; sourceTree = "<group>"; };
 		462911B144B89905C7022BA8 /* FMP4Muxer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FMP4Muxer.swift; sourceTree = "<group>"; };
+		4CDCB8ECEB86D5210918C69A /* Relay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Relay.swift; sourceTree = "<group>"; };
+		5C916E455151BBE6C685A65B /* MediaConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaConfig.swift; sourceTree = "<group>"; };
 		61F3E9166FB73E4278B5A613 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M3UParser.swift; sourceTree = "<group>"; };
 		6B48B274ED4502E642F0AD06 /* BroadcastPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastPicker.swift; sourceTree = "<group>"; };
+		700673281523D940262ADF2E /* Web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Web; sourceTree = SOURCE_ROOT; };
 		77F2C2790D7A24DB3CB93184 /* MirrorServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorServer.swift; sourceTree = "<group>"; };
 		9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		93BBA4887D2CA6B7DBB34128 /* NetworkInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInfo.swift; sourceTree = "<group>"; };
 		9F21F3937A66F0D7904B1B3D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		AE057A6AD014B3D08C4D6BBD /* TeslaMirrorBroadcast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaMirrorBroadcast.entitlements; sourceTree = "<group>"; };
 		B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStatus.swift; sourceTree = "<group>"; };
+		C70156AF5D5B3B7010FF0FE4 /* PlexService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlexService.swift; sourceTree = "<group>"; };
 		CB32D61F9059CBD8AFEDFFC5 /* H264Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264Encoder.swift; sourceTree = "<group>"; };
 		CDFA150161F10AD0BE39DE9A /* TeslaMirror.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaMirror.entitlements; sourceTree = "<group>"; };
 		D2A2B9CD069594AC0B870C2A /* WebPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebPages.swift; sourceTree = "<group>"; };
 		D634B6B58D5E09DF158E2A65 /* TeslaMirrorBroadcast.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TeslaMirrorBroadcast.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNetworkPermission.swift; sourceTree = "<group>"; };
+		E8F15A4F64A80A94476FDCB9 /* PlexSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlexSettingsView.swift; sourceTree = "<group>"; };
+		E903901274461CEA2D5DE6C1 /* IPTVSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPTVSettingsView.swift; sourceTree = "<group>"; };
 		FFAD6C2D3021CDC1FEE018BF /* JPEGEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JPEGEncoder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -77,8 +93,11 @@
 				462911B144B89905C7022BA8 /* FMP4Muxer.swift */,
 				CB32D61F9059CBD8AFEDFFC5 /* H264Encoder.swift */,
 				FFAD6C2D3021CDC1FEE018BF /* JPEGEncoder.swift */,
+				6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */,
+				5C916E455151BBE6C685A65B /* MediaConfig.swift */,
 				17C25B67E49C70AEAD86FE95 /* MirrorPipeline.swift */,
 				77F2C2790D7A24DB3CB93184 /* MirrorServer.swift */,
+				4CDCB8ECEB86D5210918C69A /* Relay.swift */,
 				B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */,
 				D2A2B9CD069594AC0B870C2A /* WebPages.swift */,
 			);
@@ -101,8 +120,11 @@
 				6B48B274ED4502E642F0AD06 /* BroadcastPicker.swift */,
 				9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */,
 				61F3E9166FB73E4278B5A613 /* Info.plist */,
+				E903901274461CEA2D5DE6C1 /* IPTVSettingsView.swift */,
 				D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */,
 				93BBA4887D2CA6B7DBB34128 /* NetworkInfo.swift */,
+				C70156AF5D5B3B7010FF0FE4 /* PlexService.swift */,
+				E8F15A4F64A80A94476FDCB9 /* PlexSettingsView.swift */,
 				CDFA150161F10AD0BE39DE9A /* TeslaMirror.entitlements */,
 				1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */,
 			);
@@ -112,6 +134,7 @@
 		3F26DD8AE3E53EBDC7398F94 = {
 			isa = PBXGroup;
 			children = (
+				700673281523D940262ADF2E /* Web */,
 				3EB49FCC73F1DA5B74B8E7CB /* App */,
 				3A770B43FE4F3B450E5A1735 /* Broadcast */,
 				1E3BB3AC68E093471056390F /* Core */,
@@ -155,6 +178,7 @@
 			buildConfigurationList = DF74D6DF355AA1C78BE32D7A /* Build configuration list for PBXNativeTarget "TeslaMirrorBroadcast" */;
 			buildPhases = (
 				BD0B40E317969EDE4B3C0C42 /* Sources */,
+				AFE8E3E884707C16A2E927B2 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -206,6 +230,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		AFE8E3E884707C16A2E927B2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				442A6E3059B010E1F86DDA91 /* Web in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		11371D9D0BCBCBB9A6D3472D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -213,8 +248,13 @@
 			files = (
 				8527D1EEFC750FC4D0F13DB8 /* BroadcastPicker.swift in Sources */,
 				D9D06C09FA1D8A1EFA7933E7 /* ContentView.swift in Sources */,
+				B43CD65B9558AE276624621B /* IPTVSettingsView.swift in Sources */,
 				79E3ED29CC573609BD508328 /* LocalNetworkPermission.swift in Sources */,
+				4D9ADE62B5444867A52D8902 /* M3UParser.swift in Sources */,
+				55B79058061353E6DB5ECC4F /* MediaConfig.swift in Sources */,
 				118123961F40AC1631CB2187 /* NetworkInfo.swift in Sources */,
+				0DB9E8AA38E112ADD13F8270 /* PlexService.swift in Sources */,
+				C916ED0B5BB6D40636068425 /* PlexSettingsView.swift in Sources */,
 				F23B273972042EF3842F7976 /* SharedStatus.swift in Sources */,
 				37AAFAD787DC0D5CB7D6FB00 /* TeslaMirrorApp.swift in Sources */,
 			);
@@ -227,8 +267,11 @@
 				03E5F05FE83681A440B5B0E1 /* FMP4Muxer.swift in Sources */,
 				FE535A92B933ED98BFB79DAA /* H264Encoder.swift in Sources */,
 				2761440120A0C9F18F25B982 /* JPEGEncoder.swift in Sources */,
+				F17087491AD8F28BBA868A09 /* M3UParser.swift in Sources */,
+				35CBDC02B1EF5EEA238A3A1B /* MediaConfig.swift in Sources */,
 				92691362BA911E208E3A176E /* MirrorPipeline.swift in Sources */,
 				C307DE8EA201AEED92536161 /* MirrorServer.swift in Sources */,
+				2238001FB52C1ED3359F2BE1 /* Relay.swift in Sources */,
 				2D942BB52C80247BF4E221CC /* SampleHandler.swift in Sources */,
 				3ECD4E3A26C9E1345503D7CF /* SharedStatus.swift in Sources */,
 				4602E2991C3D32223C548EB7 /* WebPages.swift in Sources */,

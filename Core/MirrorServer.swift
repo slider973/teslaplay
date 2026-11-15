@@ -42,6 +42,19 @@ final class MirrorServer {
     private var _rotation = 0
     private var _mjpegCount = 0
     private var _clientCount = 0
+    private var _wsCount = 0
+
+    /// Dossier des fichiers statiques (`Web/`, contenant lib/hls.min.js et lib/mpegts.js).
+    var webRoot: URL?
+    private lazy var relay: Relay = {
+        let relay = Relay(queue: queue)
+        relay.headersForURL = { url in
+            guard let plex = MediaConfig.plex(), let base = URL(string: plex.uri),
+                  url.host?.lowercased() == base.host?.lowercased() else { return [:] }
+            return MediaConfig.plexHeaders(plex)
+        }
+        return relay
+    }()
 
     init(port: UInt16) { self.port = port }
 
@@ -51,6 +64,7 @@ final class MirrorServer {
     }
 
     var hasMJPEGClients: Bool { lock.lock(); defer { lock.unlock() }; return _mjpegCount > 0 }
+    var hasMirrorClients: Bool { lock.lock(); defer { lock.unlock() }; return _wsCount > 0 }
 
     // MARK: - Cycle de vie
 
@@ -89,6 +103,7 @@ final class MirrorServer {
         queue.sync {
             listener?.cancel()
             listener = nil
+            relay.cancelAll()
             pending.values.forEach { $0.cancel() }
             mjpegClients.values.forEach { $0.conn.cancel() }
             wsClients.values.forEach { $0.conn.cancel() }
@@ -169,7 +184,7 @@ final class MirrorServer {
     }
 
     private func updateCounts() {
-        lock.lock(); _mjpegCount = mjpegClients.count; _clientCount = mjpegClients.count + wsClients.count; lock.unlock()
+        lock.lock(); _mjpegCount = mjpegClients.count; _clientCount = mjpegClients.count + wsClients.count; _wsCount = wsClients.count; lock.unlock()
     }
 
     var clientCountSnapshot: Int { lock.lock(); defer { lock.unlock() }; return _clientCount }
@@ -195,7 +210,8 @@ final class MirrorServer {
     private func route(_ conn: NWConnection, head: String) {
         let lines = head.components(separatedBy: "\r\n")
         let parts = lines.first?.split(separator: " ") ?? []
-        guard parts.count >= 2, parts[0] == "GET" else {
+        let method = parts.first.map(String.init) ?? ""
+        guard parts.count >= 2, method == "GET" || method == "HEAD" else {
             return respond(conn, status: "405 Method Not Allowed", type: "text/plain", body: Data("405".utf8))
         }
         var headers: [String: String] = [:]
@@ -204,7 +220,37 @@ final class MirrorServer {
             let key = line[..<colon].trimmingCharacters(in: .whitespaces).lowercased()
             headers[key] = line[line.index(after: colon)...].trimmingCharacters(in: .whitespaces)
         }
-        let path = String(parts[1].split(separator: "?", maxSplits: 1).first ?? "/")
+        let target = String(parts[1])
+        let path = String(target.split(separator: "?", maxSplits: 1).first ?? "/")
+
+        // Lecteur intégré : relais vers des cibles résolues ici (jamais d'URL libre).
+        if path.hasPrefix("/r/") {
+            guard let url = relay.verify(path.dropFirst(3)) else {
+                return respond(conn, status: "403 Forbidden", type: "text/plain", body: Data("Signature invalide".utf8))
+            }
+            return relay.start(conn: conn, url: url, method: method, clientHeaders: headers)
+        }
+        if path.hasPrefix("/plex/") {
+            guard let plex = MediaConfig.plex(), let url = URL(string: plex.uri + target.dropFirst(5)) else {
+                return respond(conn, status: "404 Not Found", type: "text/plain", body: Data("Plex non configuré dans l'app".utf8))
+            }
+            return relay.start(conn: conn, url: url, method: method, clientHeaders: headers)
+        }
+        if path.hasPrefix("/iptv/") {
+            guard let index = Int(path.dropFirst(6)), let url = MediaConfig.iptvURL(index: index) else {
+                return respond(conn, status: "404 Not Found", type: "text/plain", body: Data("Chaîne inconnue".utf8))
+            }
+            return relay.start(conn: conn, url: url, method: method, clientHeaders: headers)
+        }
+        if path.hasPrefix("/lib/"), let root = webRoot {
+            let name = path.dropFirst(5)
+            guard !name.contains("/"), !name.contains(".."),
+                  let data = try? Data(contentsOf: root.appendingPathComponent("lib").appendingPathComponent(String(name)),
+                                       options: .mappedIfSafe) else {
+                return respond(conn, status: "404 Not Found", type: "text/plain", body: Data("404".utf8))
+            }
+            return respond(conn, status: "200 OK", type: "application/javascript", body: data, cache: true)
+        }
 
         switch path {
         case "/", "/index.html":
@@ -220,6 +266,16 @@ final class MirrorServer {
                 return respond(conn, status: "400 Bad Request", type: "text/plain", body: Data("WebSocket attendu".utf8))
             }
             startWebSocket(conn, key: key)
+        case "/tv":
+            respond(conn, status: "200 OK", type: "text/html; charset=utf-8", body: Data(WebPages.tv.utf8))
+        case "/api/iptv":
+            respond(conn, status: "200 OK", type: "application/json",
+                    body: MediaConfig.iptvPublicData() ?? Data(#"{"groups":[],"channels":[]}"#.utf8))
+        case "/api/plex":
+            let plex = MediaConfig.plex()
+            let json = plex.map { #"{"configured":true,"name":"\#($0.name.replacingOccurrences(of: "\"", with: ""))"}"# }
+                ?? #"{"configured":false}"#
+            respond(conn, status: "200 OK", type: "application/json", body: Data(json.utf8))
         case "/health":
             respond(conn, status: "200 OK", type: "text/plain", body: Data("ok".utf8))
         case "/status":
@@ -231,9 +287,10 @@ final class MirrorServer {
         }
     }
 
-    private func respond(_ conn: NWConnection, status: String, type: String, body: Data) {
+    private func respond(_ conn: NWConnection, status: String, type: String, body: Data, cache: Bool = false) {
         let header = "HTTP/1.1 \(status)\r\nContent-Type: \(type)\r\nContent-Length: \(body.count)\r\n"
-            + "Cache-Control: no-store\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n"
+            + (cache ? "Cache-Control: max-age=86400\r\n" : "Cache-Control: no-store\r\n")
+            + "Access-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n"
         conn.send(content: Data(header.utf8) + body, completion: .contentProcessed { [weak self] _ in
             self?.remove(ObjectIdentifier(conn))
         })
@@ -245,6 +302,7 @@ final class MirrorServer {
             "mjpegClients": mjpegClients.count,
             "wsClients": wsClients.count,
             "frames": framesSent,
+            "relays": relay.activeJobs,
             "uptime": Int(Date().timeIntervalSince(startDate)),
         ]
         if let s = initSegment {

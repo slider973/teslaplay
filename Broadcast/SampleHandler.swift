@@ -16,6 +16,7 @@ final class SampleHandler: RPBroadcastSampleHandler {
         status.set("listener", "starting")
         status.set("startedAt", Date().timeIntervalSince1970, flush: true)
         let pipeline = MirrorPipeline(port: Self.port)
+        pipeline.server.webRoot = Bundle.main.url(forResource: "Web", withExtension: nil)
         do {
             try pipeline.start { [weak self] error in
                 self?.fail("Le serveur n'a pas pu démarrer sur le port \(Self.port) : \(error.localizedDescription)")

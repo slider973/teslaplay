@@ -15,6 +15,10 @@ struct ContentView: View {
     }
 
     var body: some View {
+        NavigationStack { mainContent }
+    }
+
+    private var mainContent: some View {
         ScrollView {
             VStack(spacing: 22) {
                 VStack(spacing: 6) {
@@ -52,6 +56,17 @@ struct ContentView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                 }
 
+                VStack(spacing: 0) {
+                    NavigationLink { IPTVSettingsView() } label: {
+                        settingsRow("TV (IPTV)", detail: "Liste M3U ou Xtream", icon: "tv")
+                    }
+                    Divider()
+                    NavigationLink { PlexSettingsView() } label: {
+                        settingsRow("Plex", detail: "Films et séries de votre serveur", icon: "play.rectangle")
+                    }
+                }
+                .background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Mode d'emploi").font(.headline)
                     Text("1. Activez le Partage de connexion et connectez la Tesla au Wi-Fi de l'iPhone.")
@@ -66,7 +81,12 @@ struct ContentView: View {
         }
         .onReceive(timer) { _ in refresh() }
         .onChange(of: scenePhase) { _, phase in if phase == .active { refresh() } }
-        .onAppear { refresh(); localNetwork.request() }
+        .onAppear {
+            refresh(); localNetwork.request()
+            // Évite le verrouillage auto tant que l'app est au premier plan (le relais vit dans la diffusion).
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
     }
 
     private var statusCard: some View {
@@ -102,6 +122,19 @@ struct ContentView: View {
         }
         .font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
         .padding().background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func settingsRow(_ title: String, detail: String, icon: String) -> some View {
+        HStack {
+            Image(systemName: icon).frame(width: 28)
+            VStack(alignment: .leading) {
+                Text(title).font(.headline)
+                Text(detail).font(.footnote).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").foregroundStyle(.secondary)
+        }
+        .padding().contentShape(Rectangle())
     }
 
     private func row(_ title: String, _ value: String, color: Color = .secondary) -> some View {

@@ -24,6 +24,8 @@ targets:
     sources:
       - App
       - Core/SharedStatus.swift
+      - Core/MediaConfig.swift
+      - Core/M3UParser.swift
     entitlements:
       path: App/TeslaMirror.entitlements
       properties:
@@ -44,13 +46,18 @@ targets:
         NSLocalNetworkUsageDescription: TeslaMirror a besoin du réseau local pour que la Tesla affiche l'écran de l'iPhone.
         NSBonjourServices: [_teslamirror._tcp]
         NSAppTransportSecurity:
-          NSAllowsLocalNetworking: true
+          NSAllowsArbitraryLoads: true
 
   # Le bundle ID DOIT être celui de l'app + ".Broadcast" (utilisé par RPSystemBroadcastPickerView).
   TeslaMirrorBroadcast:
     type: app-extension
     platform: iOS
-    sources: [Broadcast, Core]
+    sources:
+      - Broadcast
+      - Core
+      - path: Web
+        type: folder
+        buildPhase: resources
     entitlements:
       path: Broadcast/TeslaMirrorBroadcast.entitlements
       properties:
@@ -63,6 +70,8 @@ targets:
       path: Broadcast/Info.plist
       properties:
         CFBundleDisplayName: TeslaMirror
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
         NSLocalNetworkUsageDescription: TeslaMirror diffuse l'écran vers le navigateur de la voiture sur le réseau local.
         NSBonjourServices: [_teslamirror._tcp]
         NSExtension:

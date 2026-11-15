@@ -56,7 +56,9 @@ final class MirrorPipeline {
         status.flush(throttled: true)
         let tolerance = 0.004
 
-        if now - lastH264Time >= 1.0 / Self.h264FPS - tolerance {
+        // Sans client miroir : 1 i/s seulement (garde un GOP récent en cache, économise la batterie).
+        let h264FPS = server.hasMirrorClients ? Self.h264FPS : 1.0
+        if now - lastH264Time >= 1.0 / h264FPS - tolerance {
             lastH264Time = now
             h264Encoder.encode(pixelBuffer, pts: pts)
         }

@@ -93,6 +93,8 @@ enum WebPages {
 
     <div class="grid">
       <a class="tile main" href="/mirror">Recopier l'écran de l'iPhone</a>
+      <a class="tile main" href="/tv" style="background:#1565c0;border-color:#1e88e5">TV (IPTV)</a>
+      <a class="tile main" href="/tv#plex" style="background:#e5a00d;border-color:#f0b429;color:#111">Plex</a>
       <a class="tile alt" href="/mjpeg">Recopie (mode compatibilité)</a>
     </div>
 
@@ -236,6 +238,278 @@ enum WebPages {
     }, 2000);
 
     if (MS && window.WebSocket) connect();
+    </script></body></html>
+    """#
+
+    // MARK: - Lecteur intégré (IPTV + Plex)
+
+    /// Lu par le navigateur de la voiture, flux relayés par l'iPhone (hls.js / mpegts.js).
+    /// Aucun identifiant n'arrive ici : l'extension injecte jeton Plex et URL IPTV elle-même.
+    static let tv = #"""
+    <!doctype html>
+    <html lang="fr"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>TeslaMirror TV</title>
+    <style>
+      *{box-sizing:border-box}
+      html,body{margin:0;height:100%;background:#0d0d0f;color:#eee;font-family:-apple-system,Helvetica,Arial,sans-serif}
+      header{position:sticky;top:0;z-index:3;display:flex;gap:10px;align-items:center;padding:12px 16px;background:#141418;border-bottom:1px solid #26262c}
+      header button,header a,.btn{background:#24242a;color:#fff;border:1px solid #35353d;border-radius:12px;padding:12px 20px;font-size:18px;text-decoration:none;cursor:pointer}
+      header button.on{background:#c62828;border-color:#e53935}
+      header input{flex:1;min-width:120px;background:#1d1d22;color:#fff;border:1px solid #35353d;border-radius:12px;padding:12px 14px;font-size:18px}
+      #crumbs{padding:12px 16px 0;color:#aaa;font-size:16px}
+      #crumbs a{color:#ddd;text-decoration:none;margin-right:8px}
+      .wrap{display:flex;gap:14px;padding:14px 16px}
+      #groups{flex:0 0 240px;max-height:calc(100vh - 90px);overflow:auto;position:sticky;top:76px}
+      #groups div{padding:12px;border-radius:10px;cursor:pointer;font-size:16px;color:#ccc}
+      #groups div.on{background:#24242a;color:#fff}
+      #grid{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;align-content:start}
+      .card{background:#1a1a1f;border:1px solid #26262c;border-radius:12px;padding:10px;cursor:pointer;text-align:center;font-size:15px;overflow:hidden}
+      .card img{width:100%;aspect-ratio:16/10;object-fit:contain;background:#111;border-radius:8px;display:block;margin-bottom:8px}
+      .card.poster img{aspect-ratio:2/3;object-fit:cover}
+      .card .sub{color:#888;font-size:13px;margin-top:4px}
+      .msg{padding:30px 16px;color:#aaa;font-size:18px;line-height:1.5}
+      #more{grid-column:1/-1;margin:10px auto}
+      #player{position:fixed;inset:0;background:#000;z-index:10;display:none}
+      #player video{width:100%;height:100%;background:#000}
+      #pbar{position:absolute;left:12px;top:12px;right:12px;display:flex;gap:10px;align-items:center;transition:opacity .4s}
+      #ptitle{font-size:18px;text-shadow:0 1px 3px #000}
+      #perr{position:absolute;left:0;right:0;top:40%;text-align:center;font-size:20px;color:#f88;padding:0 20px;display:none}
+      #ptap{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:28px;background:rgba(0,0,0,.5);cursor:pointer}
+      @media (max-width:700px){#groups{display:none}}
+    </style></head><body>
+    <header>
+      <a href="/">⌂</a>
+      <button id="tabTV" class="on">TV</button>
+      <button id="tabPlex">Plex</button>
+      <input id="q" type="search" placeholder="Rechercher…">
+    </header>
+    <div id="crumbs"></div>
+    <div class="wrap"><div id="groups"></div><div id="grid"></div></div>
+    <div id="player">
+      <video id="v" controls playsinline autoplay></video>
+      <div id="pbar"><button class="btn" id="pback">← Retour</button><span id="ptitle"></span></div>
+      <div id="perr"></div>
+      <div id="ptap">▶ Toucher pour lire</div>
+    </div>
+    <script src="/lib/hls.min.js"></script>
+    <script src="/lib/mpegts.js"></script>
+    <script>
+    function $(id) { return document.getElementById(id); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+    function getJSON(url, ok, fail) {
+      var x = new XMLHttpRequest();
+      x.open('GET', url, true); x.setRequestHeader('Accept', 'application/json'); x.timeout = 20000;
+      x.onload = function () {
+        if (x.status >= 200 && x.status < 300) { try { ok(JSON.parse(x.responseText)); return; } catch (e) {} }
+        if (fail) fail(x.status + ' ' + (x.responseText || '').slice(0, 200));
+      };
+      x.onerror = x.ontimeout = function () { if (fail) fail('réseau'); };
+      x.send();
+    }
+    var mode = 'tv', grid = $('grid'), groupsEl = $('groups'), crumbs = $('crumbs');
+
+    // ---------- IPTV ----------
+    var iptv = null, curGroup = -1, shown = 0, PAGE = 120;
+    function loadTV() {
+      groupsEl.style.display = ''; crumbs.innerHTML = '';
+      if (iptv) return renderTV();
+      grid.innerHTML = '<div class="msg">Chargement des chaînes…</div>';
+      getJSON('/api/iptv', function (d) { iptv = d; renderGroups(); renderTV(); },
+              function (e) { grid.innerHTML = '<div class="msg">Erreur : ' + esc(e) + '</div>'; });
+    }
+    function renderGroups() {
+      var h = '<div data-g="-1" class="' + (curGroup < 0 ? 'on' : '') + '">Toutes (' + iptv.channels.length + ')</div>';
+      for (var i = 0; i < iptv.groups.length; i++) h += '<div data-g="' + i + '" class="' + (curGroup === i ? 'on' : '') + '">' + esc(iptv.groups[i]) + '</div>';
+      groupsEl.innerHTML = h;
+    }
+    groupsEl.onclick = function (e) {
+      var g = e.target.getAttribute('data-g'); if (g == null) return;
+      curGroup = parseInt(g, 10); renderGroups(); renderTV();
+    };
+    function tvMatches() {
+      var q = $('q').value.toLowerCase(), out = [], c = iptv.channels;
+      for (var i = 0; i < c.length; i++) {
+        if (curGroup >= 0 && c[i][1] !== curGroup) continue;
+        if (q && c[i][0].toLowerCase().indexOf(q) < 0) continue;
+        out.push(i);
+      }
+      return out;
+    }
+    function renderTV(append) {
+      if (!iptv.channels.length) {
+        grid.innerHTML = '<div class="msg">Aucune chaîne. Ajoutez votre liste IPTV (M3U ou Xtream) dans l\'app TeslaMirror sur l\'iPhone.</div>';
+        return;
+      }
+      var list = tvMatches(), h = '';
+      if (!append) shown = 0;
+      var end = Math.min(list.length, shown + PAGE);
+      for (var k = shown; k < end; k++) {
+        var i = list[k], c = iptv.channels[i];
+        h += '<div class="card" data-i="' + i + '">' + (c[2] ? '<img loading="lazy" src="' + esc(c[2]) + '" onerror="this.style.visibility=\'hidden\'">' : '<img alt="">') + esc(c[0]) + '</div>';
+      }
+      shown = end;
+      var old = $('more'); if (old) old.parentNode.removeChild(old);
+      if (append) grid.insertAdjacentHTML('beforeend', h); else grid.innerHTML = h || '<div class="msg">Aucun résultat.</div>';
+      if (shown < list.length) grid.insertAdjacentHTML('beforeend', '<button class="btn" id="more">Afficher plus (' + (list.length - shown) + ')</button>');
+    }
+
+    // ---------- Plex ----------
+    var plexStack = [];
+    function plexThumb(t) { return t ? '/plex/photo/:/transcode?width=300&height=450&minSize=1&upscale=1&url=' + encodeURIComponent(t) : ''; }
+    function loadPlex() {
+      groupsEl.style.display = 'none';
+      if (plexStack.length) return plexOpen(plexStack.pop());
+      getJSON('/api/plex', function (s) {
+        if (!s.configured) { grid.innerHTML = '<div class="msg">Plex n\'est pas connecté. Ouvrez l\'app TeslaMirror sur l\'iPhone › Plex › Se connecter.</div>'; return; }
+        plexStack = [];
+        plexOpen({ title: s.name || 'Plex', url: '/plex/library/sections', kind: 'sections' });
+      });
+    }
+    function plexOpen(level) {
+      plexStack.push(level);
+      var h = '';
+      for (var i = 0; i < plexStack.length; i++) h += '<a href="#" data-l="' + i + '">' + esc(plexStack[i].title) + '</a>' + (i < plexStack.length - 1 ? '› ' : '');
+      crumbs.innerHTML = h;
+      grid.innerHTML = '<div class="msg">Chargement…</div>';
+      getJSON(level.url, function (d) { renderPlex(level, (d.MediaContainer || {})); },
+              function (e) { grid.innerHTML = '<div class="msg">Erreur Plex : ' + esc(e) + '</div>'; });
+    }
+    crumbs.onclick = function (e) {
+      var l = e.target.getAttribute('data-l'); if (l == null) return;
+      e.preventDefault(); var lvl = plexStack[+l]; plexStack = plexStack.slice(0, +l); plexOpen(lvl);
+    };
+    var plexItems = [];
+    function renderPlex(level, mc) {
+      var h = '', q = $('q').value.toLowerCase();
+      plexItems = [];
+      if (level.kind === 'sections') {
+        plexItems.push({ type: 'dir', title: 'En cours', url: '/plex/library/onDeck' });
+        (mc.Directory || []).forEach(function (d) {
+          if (d.type === 'movie' || d.type === 'show')
+            plexItems.push({ type: 'dir', title: d.title, url: '/plex/library/sections/' + d.key + '/all?X-Plex-Container-Start=0&X-Plex-Container-Size=500' });
+        });
+        plexItems.forEach(function (it, i) { h += '<div class="card" data-p="' + i + '" style="padding:28px 10px;font-size:20px">' + esc(it.title) + '</div>'; });
+      } else {
+        (mc.Metadata || []).forEach(function (m) {
+          if (q && (m.title || '').toLowerCase().indexOf(q) < 0) return;
+          var it = { type: m.type, title: m.title, key: m.ratingKey, thumb: m.thumb || m.parentThumb || m.grandparentThumb };
+          if (m.type === 'episode') it.title = (m.grandparentTitle ? m.grandparentTitle + ' · ' : '') + 'E' + (m.index || '') + ' ' + m.title;
+          if (m.type === 'show' || m.type === 'season') it.url = '/plex/library/metadata/' + m.ratingKey + '/children';
+          plexItems.push(it);
+        });
+        plexItems.forEach(function (it, i) {
+          h += '<div class="card poster" data-p="' + i + '">' + (it.thumb ? '<img loading="lazy" src="' + plexThumb(it.thumb) + '">' : '<img alt="">') + esc(it.title) + '</div>';
+        });
+      }
+      grid.innerHTML = h || '<div class="msg">Vide.</div>';
+    }
+    function plexClick(i) {
+      var it = plexItems[i]; if (!it) return;
+      if (it.type === 'movie' || it.type === 'episode' || it.type === 'clip') return playPlex(it);
+      if (it.url) plexOpen({ title: it.title, url: it.url, kind: 'list' });
+    }
+    var plexSession = null;
+    function playPlex(it) {
+      plexSession = 'tm' + Date.now();
+      var q = 'path=' + encodeURIComponent('/library/metadata/' + it.key) +
+        '&mediaIndex=0&partIndex=0&protocol=hls&fastSeek=1&directPlay=0&directStream=1&directStreamAudio=1' +
+        '&subtitleSize=100&audioBoost=100&location=wan&videoResolution=1920x1080&maxVideoBitrate=8000' +
+        '&subtitles=burn&copyts=1&session=' + plexSession + '&X-Plex-Session-Identifier=' + plexSession;
+      play('/plex/video/:/transcode/universal/start.m3u8?' + q, it.title, true);
+    }
+
+    grid.onclick = function (e) {
+      var el = e.target; while (el && el !== grid && !el.getAttribute('data-i') && !el.getAttribute('data-p') && el.id !== 'more') el = el.parentNode;
+      if (!el || el === grid) return;
+      if (el.id === 'more') return renderTV(true);
+      if (el.getAttribute('data-i') != null) { var i = +el.getAttribute('data-i'); return play('/iptv/' + i, iptv.channels[i][0], false); }
+      plexClick(+el.getAttribute('data-p'));
+    };
+
+    // ---------- Lecteur ----------
+    var v = $('v'), hls = null, ts = null, barTimer = null;
+    function stopEngines() {
+      if (hls) { try { hls.destroy(); } catch (e) {} hls = null; }
+      if (ts) { try { ts.destroy(); } catch (e) {} ts = null; }
+      v.onerror = null; v.removeAttribute('src'); try { v.load(); } catch (e) {}
+    }
+    function showErr(t) { $('perr').textContent = t; $('perr').style.display = 'block'; }
+    function tryPlay() {
+      var p = v.play();
+      if (p && p.catch) p.catch(function () { $('ptap').style.display = 'flex'; });
+    }
+    $('ptap').onclick = function () { $('ptap').style.display = 'none'; v.muted = false; tryPlay(); };
+    function showBar() {
+      $('pbar').style.opacity = '1'; clearTimeout(barTimer);
+      barTimer = setTimeout(function () { $('pbar').style.opacity = '0'; }, 3500);
+    }
+    $('player').addEventListener('click', showBar);
+    $('player').addEventListener('touchstart', showBar);
+    function codecMsg() { showErr('Format non lisible par le navigateur de la voiture (souvent HEVC/H.265, MPEG-2 ou AC-3). Essayez une autre chaîne ou une autre qualité.'); }
+
+    function play(url, title, isPlex) {
+      stopEngines();
+      $('perr').style.display = 'none'; $('ptap').style.display = 'none';
+      $('ptitle').textContent = title; $('player').style.display = 'block'; showBar();
+      var abs = location.protocol + '//' + location.host + url;
+      if (!isPlex && /\.(mp4|m4v|mov|webm|mkv)(\?|$)/i.test(title + ' ' + url)) return playNative(abs);
+      playHls(abs, isPlex ? null : function () { playTs(abs, function () { playNative(abs); }); });
+    }
+    function playHls(url, fallback) {
+      if (!window.Hls || !Hls.isSupported()) { return fallback ? fallback() : playNative(url); }
+      hls = new Hls({ maxBufferLength: 30, backBufferLength: 30, manifestLoadingMaxRetry: 2 });
+      hls.on(Hls.Events.ERROR, function (ev, d) {
+        if (!d.fatal) return;
+        if (d.details === 'manifestParsingError' && fallback) { hls.destroy(); hls = null; return fallback(); }
+        if (/Codec|incompatible/i.test(d.details)) return codecMsg();
+        if (d.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          var code = d.response && d.response.code;
+          if (fallback && !code) { hls.destroy(); hls = null; return fallback(); }
+          return showErr('Source injoignable (' + (code || d.details) + ').');
+        }
+        if (d.type === Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); return; }
+        showErr('Erreur de lecture : ' + d.details);
+      });
+      hls.on(Hls.Events.MANIFEST_PARSED, tryPlay);
+      hls.loadSource(url); hls.attachMedia(v);
+    }
+    function playTs(url, fallback) {
+      if (!window.mpegts || !mpegts.getFeatureList().mseLivePlayback) return fallback();
+      ts = mpegts.createPlayer({ type: 'mpegts', isLive: true, url: url },
+                               { enableWorker: false, liveBufferLatencyChasing: true, lazyLoad: false });
+      ts.on(mpegts.Events.ERROR, function (type, detail) {
+        // Pas du MPEG-TS (fichier MP4, etc.) : on laisse le lecteur natif essayer.
+        if (type === mpegts.ErrorTypes.MEDIA_ERROR) { try { ts.destroy(); } catch (e) {} ts = null; return fallback(); }
+        showErr('Erreur flux : ' + detail);
+      });
+      ts.attachMediaElement(v); ts.load(); tryPlay();
+    }
+    function playNative(url) {
+      v.onerror = function () { v.onerror = null; codecMsg(); };
+      v.src = url; tryPlay();
+    }
+    $('pback').onclick = function (e) {
+      e.stopPropagation(); stopEngines(); $('player').style.display = 'none';
+      if (plexSession) { var x = new XMLHttpRequest(); x.open('GET', '/plex/video/:/transcode/universal/stop?session=' + plexSession, true); x.send(); plexSession = null; }
+    };
+
+    // ---------- Onglets ----------
+    function setMode(m) {
+      mode = m; $('tabTV').className = m === 'tv' ? 'on' : ''; $('tabPlex').className = m === 'plex' ? 'on' : '';
+      if (m === 'tv') loadTV(); else { plexStack = []; loadPlex(); }
+    }
+    $('tabTV').onclick = function () { setMode('tv'); };
+    $('tabPlex').onclick = function () { setMode('plex'); };
+    var qTimer = null;
+    $('q').oninput = function () {
+      clearTimeout(qTimer);
+      qTimer = setTimeout(function () {
+        if (mode === 'tv' && iptv) renderTV();
+        else if (mode === 'plex' && plexStack.length) { var l = plexStack.pop(); plexOpen(l); }
+      }, 250);
+    };
+    setMode(location.hash === '#plex' ? 'plex' : 'tv');
     </script></body></html>
     """#
 }
