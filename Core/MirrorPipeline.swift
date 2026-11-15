@@ -14,6 +14,7 @@ final class MirrorPipeline {
     private let h264Encoder = H264Encoder(shortSide: 720, fps: Int(MirrorPipeline.h264FPS), bitrate: 3_000_000)
     private var lastJPEGTime = -Double.infinity
     private var lastH264Time = -Double.infinity
+    private var frameCount = 0
 
     /// Observateurs de débogage (harnais de test).
     var onInitSegment: ((FMP4Muxer.InitSegment) -> Void)?
@@ -47,6 +48,12 @@ final class MirrorPipeline {
     func process(pixelBuffer: CVPixelBuffer, rotation: Int, pts: CMTime) {
         server.rotation = rotation
         let now = ProcessInfo.processInfo.systemUptime
+        frameCount += 1
+        let status = SharedStatus.shared
+        status.set("frames", frameCount)
+        status.set("clients", server.clientCountSnapshot)
+        status.set("memoryMB", SharedStatus.memoryFootprintMB())
+        status.flush(throttled: true)
         let tolerance = 0.004
 
         if now - lastH264Time >= 1.0 / Self.h264FPS - tolerance {

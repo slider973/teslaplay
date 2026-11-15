@@ -21,7 +21,13 @@ targets:
   TeslaMirror:
     type: application
     platform: iOS
-    sources: [App]
+    sources:
+      - App
+      - Core/SharedStatus.swift
+    entitlements:
+      path: App/TeslaMirror.entitlements
+      properties:
+        com.apple.security.application-groups: [group.$(BUNDLE_ID_PREFIX).TeslaMirror]
     dependencies:
       - target: TeslaMirrorBroadcast
         embed: true
@@ -35,7 +41,8 @@ targets:
         CFBundleDisplayName: TeslaMirror
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        NSLocalNetworkUsageDescription: TeslaMirror affiche l'état du serveur de recopie d'écran local.
+        NSLocalNetworkUsageDescription: TeslaMirror a besoin du réseau local pour que la Tesla affiche l'écran de l'iPhone.
+        NSBonjourServices: [_teslamirror._tcp]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
 
@@ -44,6 +51,10 @@ targets:
     type: app-extension
     platform: iOS
     sources: [Broadcast, Core]
+    entitlements:
+      path: Broadcast/TeslaMirrorBroadcast.entitlements
+      properties:
+        com.apple.security.application-groups: [group.$(BUNDLE_ID_PREFIX).TeslaMirror]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).TeslaMirror.Broadcast
@@ -53,6 +64,7 @@ targets:
       properties:
         CFBundleDisplayName: TeslaMirror
         NSLocalNetworkUsageDescription: TeslaMirror diffuse l'écran vers le navigateur de la voiture sur le réseau local.
+        NSBonjourServices: [_teslamirror._tcp]
         NSExtension:
           NSExtensionPointIdentifier: com.apple.broadcast-services-upload
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler

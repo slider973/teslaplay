@@ -25,8 +25,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_teslamirror._tcp</string>
+	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>TeslaMirror affiche l'état du serveur de recopie d'écran local.</string>
+	<string>TeslaMirror a besoin du réseau local pour que la Tesla affiche l'écran de l'iPhone.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

@@ -10,6 +10,7 @@ import CryptoKit
 ///   GET /stream  → flux multipart/x-mixed-replace (JPEG)
 ///   GET /ws      → WebSocket : texte {"type":"init","codec":…} puis init segment fMP4, puis fragments
 ///   GET /status  → JSON (rotation, clients…)
+///   GET /health  → "ok"
 ///
 /// Tout l'état est confiné à `queue` (série). Aucun envoi n'est mis en file sans limite :
 /// MJPEG saute les images quand le client est lent, WebSocket jette jusqu'à la prochaine keyframe.
@@ -39,6 +40,7 @@ final class MirrorServer {
     private let lock = NSLock()
     private var _rotation = 0
     private var _mjpegCount = 0
+    private var _clientCount = 0
 
     init(port: UInt16) { self.port = port }
 
@@ -60,13 +62,22 @@ final class MirrorServer {
         guard let nwPort = NWEndpoint.Port(rawValue: port) else { throw NWError.posix(.EINVAL) }
         let listener = try NWListener(using: params, on: nwPort)
         listener.newConnectionHandler = { [weak self] conn in self?.accept(conn) }
-        listener.stateUpdateHandler = { state in
+        listener.stateUpdateHandler = { [weak self] state in
+            let text: String
             switch state {
-            case .ready: NSLog("[TeslaMirror] serveur à l'écoute sur le port \(nwPort)")
-            case .failed(let error):
+            case .setup: text = "setup"
+            case .ready: text = "ready"
+            case .waiting(let error): text = "waiting: \(error)"
+            case .failed(let error): text = "failed: \(error)"
+            case .cancelled: text = "cancelled"
+            @unknown default: text = "unknown"
+            }
+            NSLog("[TeslaMirror] listener port \(nwPort) → \(text)")
+            SharedStatus.shared.set("listener", text)
+            SharedStatus.shared.set("port", Int(self?.port ?? 0), flush: true)
+            if case .failed(let error) = state {
                 // Hors de `queue` : le gestionnaire d'erreur peut appeler stop() (queue.sync).
                 DispatchQueue.global().async { onFailure(error) }
-            default: break
             }
         }
         self.listener = listener
@@ -157,8 +168,10 @@ final class MirrorServer {
     }
 
     private func updateCounts() {
-        lock.lock(); _mjpegCount = mjpegClients.count; lock.unlock()
+        lock.lock(); _mjpegCount = mjpegClients.count; _clientCount = mjpegClients.count + wsClients.count; lock.unlock()
     }
+
+    var clientCountSnapshot: Int { lock.lock(); defer { lock.unlock() }; return _clientCount }
 
     private var clientCount: Int { mjpegClients.count + wsClients.count }
 
@@ -204,6 +217,8 @@ final class MirrorServer {
                 return respond(conn, status: "400 Bad Request", type: "text/plain", body: Data("WebSocket attendu".utf8))
             }
             startWebSocket(conn, key: key)
+        case "/health":
+            respond(conn, status: "200 OK", type: "text/plain", body: Data("ok".utf8))
         case "/status":
             respond(conn, status: "200 OK", type: "application/json", body: statusJSON())
         case "/favicon.ico":
@@ -303,6 +318,7 @@ final class MirrorServer {
 
         let client = WSClient(conn)
         wsClients[id] = client
+        updateCounts()
         readWebSocket(client)
 
         if let segment = initSegment {

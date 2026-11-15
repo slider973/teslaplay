@@ -4,6 +4,9 @@ struct ContentView: View {
     @State private var addresses = NetworkInfo.addresses()
     @State private var selectedIP = NetworkInfo.hotspotIP
     @State private var status: ServerStatus?
+    @State private var shared: [String: Any] = [:]
+    @State private var health = "—"
+    @StateObject private var localNetwork = LocalNetworkPermission()
     @Environment(\.scenePhase) private var scenePhase
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
@@ -21,6 +24,7 @@ struct ContentView: View {
                 }
 
                 statusCard
+                diagnosticCard
 
                 Label(status == nil ? "Démarrer la diffusion" : "Arrêter / gérer la diffusion",
                       systemImage: "record.circle")
@@ -62,7 +66,7 @@ struct ContentView: View {
         }
         .onReceive(timer) { _ in refresh() }
         .onChange(of: scenePhase) { _, phase in if phase == .active { refresh() } }
-        .onAppear { refresh() }
+        .onAppear { refresh(); localNetwork.request() }
     }
 
     private var statusCard: some View {
@@ -79,8 +83,69 @@ struct ContentView: View {
         .font(.callout).padding().background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    /// L'app interroge directement le serveur de l'extension sur 127.0.0.1 : pas besoin d'App Group.
+    private var diagnosticCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Diagnostic").font(.headline)
+            row("Réseau local", localNetworkText, color: localNetworkColor)
+            row("Diffusion (extension)", shared["broadcast"] as? String ?? "jamais lancée")
+            row("Serveur :\(shared["port"] as? Int ?? 8080)", shared["listener"] as? String ?? "—",
+                color: (shared["listener"] as? String) == "ready" ? .green : .orange)
+            row("Images reçues", "\(shared["frames"] as? Int ?? 0) · dernière MAJ \(ageText)")
+            row("Mémoire extension", (shared["memoryMB"] as? Double).map { "\($0) Mo / ~50" } ?? "—")
+            row("127.0.0.1:8080/health", health, color: health == "ok" ? .green : .orange)
+            if localNetwork.state == .denied {
+                Text("Autorisez TeslaMirror dans Réglages › Confidentialité et sécurité › Réseau local.")
+                    .foregroundStyle(.orange)
+            }
+            Button("Redemander l'accès réseau local") { localNetwork.request() }
+                .font(.footnote)
+        }
+        .font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
+        .padding().background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func row(_ title: String, _ value: String, color: Color = .secondary) -> some View {
+        HStack(alignment: .top) {
+            Text(title)
+            Spacer()
+            Text(value).foregroundStyle(color).multilineTextAlignment(.trailing).textSelection(.enabled)
+        }
+    }
+
+    private var localNetworkText: String {
+        switch localNetwork.state {
+        case .unknown: return "inconnu"
+        case .checking: return "vérification…"
+        case .granted: return "accordé"
+        case .denied: return "REFUSÉ"
+        }
+    }
+
+    private var localNetworkColor: Color {
+        switch localNetwork.state {
+        case .granted: return .green
+        case .denied: return .red
+        default: return .secondary
+        }
+    }
+
+    private var ageText: String {
+        guard let t = shared["updatedAt"] as? Double else { return "—" }
+        return "il y a \(Int(Date().timeIntervalSince1970 - t)) s"
+    }
+
     private func refresh() {
+        if let url = SharedStatus.fileURL, let data = try? Data(contentsOf: url),
+           let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            shared = obj
+        }
+        var healthRequest = URLRequest(url: URL(string: "http://127.0.0.1:8080/health")!)
+        healthRequest.timeoutInterval = 1.5
+        URLSession.shared.dataTask(with: healthRequest) { data, _, error in
+            let text = data.map { String(decoding: $0, as: UTF8.self) } ?? (error.map { ($0 as NSError).localizedDescription } ?? "?")
+            DispatchQueue.main.async { health = text }
+        }.resume()
+
         let current = NetworkInfo.addresses()
         if current != addresses { addresses = current }
         var request = URLRequest(url: URL(string: "http://127.0.0.1:8080/status")!)

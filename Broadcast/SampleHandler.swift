@@ -10,6 +10,11 @@ final class SampleHandler: RPBroadcastSampleHandler {
     private var pipeline: MirrorPipeline?
 
     override func broadcastStarted(withSetupInfo setupInfo: [String: NSObject]?) {
+        let status = SharedStatus.shared
+        status.reset()
+        status.set("broadcast", "started")
+        status.set("listener", "starting")
+        status.set("startedAt", Date().timeIntervalSince1970, flush: true)
         let pipeline = MirrorPipeline(port: Self.port)
         do {
             try pipeline.start { [weak self] error in
@@ -21,12 +26,14 @@ final class SampleHandler: RPBroadcastSampleHandler {
         }
     }
 
-    override func broadcastPaused() {}
-    override func broadcastResumed() {}
+    override func broadcastPaused() { SharedStatus.shared.set("broadcast", "paused", flush: true) }
+    override func broadcastResumed() { SharedStatus.shared.set("broadcast", "started", flush: true) }
 
     override func broadcastFinished() {
         pipeline?.stop()
         pipeline = nil
+        SharedStatus.shared.set("broadcast", "finished")
+        SharedStatus.shared.set("listener", "stopped", flush: true)
     }
 
     override func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, with sampleBufferType: RPSampleBufferType) {
@@ -55,6 +62,8 @@ final class SampleHandler: RPBroadcastSampleHandler {
     }
 
     private func fail(_ message: String) {
+        NSLog("[TeslaMirror] \(message)")
+        SharedStatus.shared.set("broadcast", "error: \(message)", flush: true)
         let error = NSError(domain: "TeslaMirror", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
         finishBroadcastWithError(error)
     }

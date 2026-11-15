@@ -12,12 +12,15 @@
 		2761440120A0C9F18F25B982 /* JPEGEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFAD6C2D3021CDC1FEE018BF /* JPEGEncoder.swift */; };
 		2D942BB52C80247BF4E221CC /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A537795603F9043B1B528F /* SampleHandler.swift */; };
 		37AAFAD787DC0D5CB7D6FB00 /* TeslaMirrorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */; };
+		3ECD4E3A26C9E1345503D7CF /* SharedStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */; };
 		4602E2991C3D32223C548EB7 /* WebPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A2B9CD069594AC0B870C2A /* WebPages.swift */; };
 		4F2DA9958156D0AB952F11A1 /* TeslaMirrorBroadcast.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D634B6B58D5E09DF158E2A65 /* TeslaMirrorBroadcast.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		79E3ED29CC573609BD508328 /* LocalNetworkPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */; };
 		8527D1EEFC750FC4D0F13DB8 /* BroadcastPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B48B274ED4502E642F0AD06 /* BroadcastPicker.swift */; };
 		92691362BA911E208E3A176E /* MirrorPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C25B67E49C70AEAD86FE95 /* MirrorPipeline.swift */; };
 		C307DE8EA201AEED92536161 /* MirrorServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F2C2790D7A24DB3CB93184 /* MirrorServer.swift */; };
 		D9D06C09FA1D8A1EFA7933E7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */; };
+		F23B273972042EF3842F7976 /* SharedStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */; };
 		FE535A92B933ED98BFB79DAA /* H264Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB32D61F9059CBD8AFEDFFC5 /* H264Encoder.swift */; };
 /* End PBXBuildFile section */
 
@@ -57,9 +60,13 @@
 		9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		93BBA4887D2CA6B7DBB34128 /* NetworkInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInfo.swift; sourceTree = "<group>"; };
 		9F21F3937A66F0D7904B1B3D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		AE057A6AD014B3D08C4D6BBD /* TeslaMirrorBroadcast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaMirrorBroadcast.entitlements; sourceTree = "<group>"; };
+		B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStatus.swift; sourceTree = "<group>"; };
 		CB32D61F9059CBD8AFEDFFC5 /* H264Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264Encoder.swift; sourceTree = "<group>"; };
+		CDFA150161F10AD0BE39DE9A /* TeslaMirror.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaMirror.entitlements; sourceTree = "<group>"; };
 		D2A2B9CD069594AC0B870C2A /* WebPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebPages.swift; sourceTree = "<group>"; };
 		D634B6B58D5E09DF158E2A65 /* TeslaMirrorBroadcast.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TeslaMirrorBroadcast.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNetworkPermission.swift; sourceTree = "<group>"; };
 		FFAD6C2D3021CDC1FEE018BF /* JPEGEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JPEGEncoder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -72,6 +79,7 @@
 				FFAD6C2D3021CDC1FEE018BF /* JPEGEncoder.swift */,
 				17C25B67E49C70AEAD86FE95 /* MirrorPipeline.swift */,
 				77F2C2790D7A24DB3CB93184 /* MirrorServer.swift */,
+				B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */,
 				D2A2B9CD069594AC0B870C2A /* WebPages.swift */,
 			);
 			path = Core;
@@ -82,6 +90,7 @@
 			children = (
 				9F21F3937A66F0D7904B1B3D /* Info.plist */,
 				37A537795603F9043B1B528F /* SampleHandler.swift */,
+				AE057A6AD014B3D08C4D6BBD /* TeslaMirrorBroadcast.entitlements */,
 			);
 			path = Broadcast;
 			sourceTree = "<group>";
@@ -92,7 +101,9 @@
 				6B48B274ED4502E642F0AD06 /* BroadcastPicker.swift */,
 				9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */,
 				61F3E9166FB73E4278B5A613 /* Info.plist */,
+				D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */,
 				93BBA4887D2CA6B7DBB34128 /* NetworkInfo.swift */,
+				CDFA150161F10AD0BE39DE9A /* TeslaMirror.entitlements */,
 				1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */,
 			);
 			path = App;
@@ -202,7 +213,9 @@
 			files = (
 				8527D1EEFC750FC4D0F13DB8 /* BroadcastPicker.swift in Sources */,
 				D9D06C09FA1D8A1EFA7933E7 /* ContentView.swift in Sources */,
+				79E3ED29CC573609BD508328 /* LocalNetworkPermission.swift in Sources */,
 				118123961F40AC1631CB2187 /* NetworkInfo.swift in Sources */,
+				F23B273972042EF3842F7976 /* SharedStatus.swift in Sources */,
 				37AAFAD787DC0D5CB7D6FB00 /* TeslaMirrorApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -217,6 +230,7 @@
 				92691362BA911E208E3A176E /* MirrorPipeline.swift in Sources */,
 				C307DE8EA201AEED92536161 /* MirrorServer.swift in Sources */,
 				2D942BB52C80247BF4E221CC /* SampleHandler.swift in Sources */,
+				3ECD4E3A26C9E1345503D7CF /* SharedStatus.swift in Sources */,
 				4602E2991C3D32223C548EB7 /* WebPages.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -236,6 +250,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/TeslaMirror.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -321,6 +336,7 @@
 		87C6F23A048430943717F520 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Broadcast/TeslaMirrorBroadcast.entitlements;
 				INFOPLIST_FILE = Broadcast/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -400,6 +416,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = App/TeslaMirror.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -416,6 +433,7 @@
 		F41AE4A70338CD98AD492F04 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Broadcast/TeslaMirrorBroadcast.entitlements;
 				INFOPLIST_FILE = Broadcast/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
