@@ -1,0 +1,83 @@
+// Harnais de test macOS : fait tourner le code de Core/ (serveur + encodeurs) avec des images
+// synthétiques, sans ReplayKit. Usage : Tools/run-harness.sh [port] [secondes] [fichier.mp4]
+import Foundation
+import CoreMedia
+import CoreVideo
+
+let args = CommandLine.arguments
+let port = UInt16(args.count > 1 ? args[1] : "8099") ?? 8099
+let seconds = Double(args.count > 2 ? args[2] : "60") ?? 60
+let dumpPath = args.count > 3 ? args[3] : nil
+
+let pipeline = MirrorPipeline(port: port)
+var dump = Data()
+var initCount = 0, keyCount = 0, fragCount = 0
+pipeline.onInitSegment = { s in
+    initCount += 1
+    print("init segment: codec=\(s.codec) \(s.width)x\(s.height) \(s.data.count) octets")
+    if dump.isEmpty { dump.append(s.data) }
+}
+pipeline.onFragment = { d, k in
+    fragCount += 1; if k { keyCount += 1 }
+    if dumpPath != nil && dump.count < 20_000_000 { dump.append(d) }
+}
+try pipeline.start { error in print("ERREUR serveur: \(error)"); exit(1) }
+
+// Buffer 1179x2556 (iPhone 15/16) en BGRA, motif animé.
+let W = 1179, H = 2556
+var pool: CVPixelBufferPool?
+CVPixelBufferPoolCreate(nil, nil, [
+    kCVPixelBufferPixelFormatTypeKey: kCVPixelFormatType_32BGRA,
+    kCVPixelBufferWidthKey: W, kCVPixelBufferHeightKey: H,
+    kCVPixelBufferIOSurfacePropertiesKey: [:],
+] as CFDictionary, &pool)
+
+func makeFrame(_ n: Int) -> CVPixelBuffer {
+    var pb: CVPixelBuffer?
+    CVPixelBufferPoolCreatePixelBuffer(nil, pool!, &pb)
+    let buf = pb!
+    CVPixelBufferLockBaseAddress(buf, [])
+    let base = CVPixelBufferGetBaseAddress(buf)!.assumingMemoryBound(to: UInt8.self)
+    let stride = CVPixelBufferGetBytesPerRow(buf)
+    let barY = (n * 12) % H
+    for y in 0..<H {
+        let row = base + y * stride
+        let inBar = abs(y - barY) < 60
+        for x in Swift.stride(from: 0, to: W, by: 1) {
+            let p = row + x * 4
+            if inBar { p[0] = 255; p[1] = 255; p[2] = 255 }
+            else { p[0] = UInt8((x + n * 3) & 0xFF); p[1] = UInt8(y & 0xFF); p[2] = UInt8((n * 5) & 0xFF) }
+            p[3] = 255
+        }
+    }
+    CVPixelBufferUnlockBaseAddress(buf, [])
+    return buf
+}
+
+print("Harnais sur http://127.0.0.1:\(port)  (\(Int(seconds)) s, cadence irrégulière + pauses)")
+let start = Date()
+var n = 0
+let queue = DispatchQueue(label: "harness.frames")
+queue.async {
+    while Date().timeIntervalSince(start) < seconds {
+        let t = Date().timeIntervalSince(start)
+        // Toutes les 15 s : pause de 4 s (écran statique, comme ReplayKit).
+        if t.truncatingRemainder(dividingBy: 15) > 11 { Thread.sleep(forTimeInterval: 0.05); continue }
+        let pts = CMTime(seconds: ProcessInfo.processInfo.systemUptime, preferredTimescale: 1_000_000_000)
+        autoreleasepool {
+            pipeline.process(pixelBuffer: makeFrame(n), rotation: (Int(t) / 20 % 2) * 90, pts: pts)
+        }
+        n += 1
+        // 60 fps avec gigue
+        Thread.sleep(forTimeInterval: 1.0 / 60.0 + Double.random(in: -0.005...0.01))
+    }
+    Thread.sleep(forTimeInterval: 0.5)
+    print("Fin : \(n) images fournies, \(fragCount) fragments (\(keyCount) keyframes), \(initCount) init")
+    if let dumpPath {
+        try? dump.write(to: URL(fileURLWithPath: dumpPath))
+        print("fMP4 écrit : \(dumpPath) (\(dump.count) octets)")
+    }
+    pipeline.stop()
+    exit(0)
+}
+dispatchMain()
