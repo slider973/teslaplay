@@ -47,6 +47,36 @@ if let jfSpec = env["TM_JF"], MediaConfig.overrideDirectory != nil {
     }
     sem.wait()
 }
+// Connexion rapide de test : TM_JF_QC="https://serveur|utilisateur|motdepasse" ; l'approbation
+// est faite par une 2e session (connexion par mot de passe) qui simule l'autre appareil.
+if let spec = env["TM_JF_QC"], MediaConfig.overrideDirectory != nil {
+    let p = spec.components(separatedBy: "|")
+    let sem = DispatchSemaphore(value: 0)
+    Task {
+        do {
+            let qc = try await JellyfinAuth.initiateQuickConnect(server: p[0], deviceId: "tm-harness-qc")
+            print("Connexion rapide : code \(qc.code)")
+            print("approuvé avant validation ? \(try await JellyfinAuth.quickConnectApproved(server: p[0], secret: qc.secret, deviceId: "tm-harness-qc"))")
+            let other = try await JellyfinAuth.login(server: p[0], username: p[1], password: p.count > 2 ? p[2] : "", deviceId: "tm-other-device")
+            var r = URLRequest(url: URL(string: other.uri + "/QuickConnect/Authorize?code=\(qc.code)&userId=\(other.userId)")!)
+            r.httpMethod = "POST"
+            r.setValue(JellyfinAuth.authorizationHeader(deviceId: "tm-other-device", token: other.token), forHTTPHeaderField: "Authorization")
+            let (_, resp) = try await URLSession.shared.data(for: r)
+            print("validation par l'autre appareil : HTTP \((resp as? HTTPURLResponse)?.statusCode ?? 0)")
+            var ok = false
+            for _ in 0..<10 where !ok {
+                ok = try await JellyfinAuth.quickConnectApproved(server: p[0], secret: qc.secret, deviceId: "tm-harness-qc")
+                if !ok { try await Task.sleep(nanoseconds: 1_000_000_000) }
+            }
+            print("approuvé : \(ok)")
+            let cfg = try await JellyfinAuth.completeQuickConnect(server: p[0], secret: qc.secret, deviceId: "tm-harness-qc")
+            MediaConfig.saveJellyfin(cfg)
+            print("Jellyfin (connexion rapide) : connecté à \(cfg.name), jeton \(cfg.token.isEmpty ? "absent" : "reçu")")
+        } catch { print("Connexion rapide erreur : \(error)") }
+        sem.signal()
+    }
+    sem.wait()
+}
 var dump = Data()
 var initCount = 0, keyCount = 0, fragCount = 0
 pipeline.onInitSegment = { s in

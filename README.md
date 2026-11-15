@@ -133,7 +133,7 @@ Dans la voiture, ouvrez `http://172.20.10.1:8080` puis **TV**, **Plex** ou **Jel
 - **Configuration, dans l'app iPhone :**
   - *TV (IPTV)* : un lien M3U ou un compte Xtream Codes. La liste est téléchargée et analysée dans l'app, puis rangée dans l'App Group.
   - *Plex* : connexion via plex.tv, choix du serveur, puis test de ses adresses. Le serveur doit être joignable à distance.
-  - *Jellyfin* : adresse du serveur, utilisateur et mot de passe. Seul le jeton d'accès est conservé. Le serveur transcode en H.264/AAC (HLS).
+  - *Jellyfin* : adresse du serveur puis **connexion rapide**. L'app affiche un code à 6 chiffres à valider depuis un appareil déjà connecté à Jellyfin (*Profil → Connexion rapide*). La connexion par identifiant et mot de passe reste disponible en repli. Seul le jeton d'accès est conservé. Le serveur transcode en H.264/AAC (HLS).
 - **Relais, dans l'extension :** `/iptv/<n>`, `/plex/…`, `/jf/…`, et `/r/<signature>/…` pour les segments HLS réécrits. Ce n'est pas un proxy ouvert : seules les cibles configurées et les URL signées pendant la session sont relayées. Le jeton Plex et les URL IPTV, qui peuvent contenir des identifiants, ne sont jamais envoyés au navigateur.
 - **Contre-pression :** la source est mise en pause au-delà de 2 Mo en attente, puis annulée à la déconnexion. 10 flux au maximum en même temps.
 - **Diffusion obligatoire :** le serveur vit dans l'extension de diffusion, donc la **diffusion TeslaMirror doit être active** pendant la lecture. L'app empêche le verrouillage automatique tant qu'elle est au premier plan.
@@ -144,7 +144,7 @@ Dans la voiture, ouvrez `http://172.20.10.1:8080` puis **TV**, **Plex** ou **Jel
 | HLS public (Apple, Mux) via le relais, image et son décodés | Navigateur Tesla |
 | Réécriture des playlists, `URI="…"`, signature (403 sinon) | MPEG-TS en direct (aucune source de test) |
 | MP4 direct, requêtes `Range` (206) | Plex de bout en bout (nécessite un compte) |
-| Jellyfin de bout en bout : serveur de démo public, bibliothèques, affiches, film transcodé lu avec image et son | |
+| Jellyfin de bout en bout : serveur de démo public, connexion rapide (code → validation par une autre session → jeton), bibliothèques, affiches, film transcodé lu avec image et son | |
 | Client lent sur 30 Mo : mémoire stable, relais annulé à la fermeture | Mémoire réelle de l'extension sur iPhone pendant un relais |
 
 Tests sur Mac : `TM_WEBROOT=Web TM_MEDIA_DIR=/tmp/media TM_M3U=liste.m3u TM_JF="https://demo.jellyfin.org/stable|demo|" Tools/run-harness.sh 8099 300`, puis ouvrez `http://127.0.0.1:8099/tv`.
