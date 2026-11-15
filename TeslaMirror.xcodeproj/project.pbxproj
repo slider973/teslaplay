@@ -15,18 +15,21 @@
 		2D942BB52C80247BF4E221CC /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A537795603F9043B1B528F /* SampleHandler.swift */; };
 		35CBDC02B1EF5EEA238A3A1B /* MediaConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C916E455151BBE6C685A65B /* MediaConfig.swift */; };
 		37AAFAD787DC0D5CB7D6FB00 /* TeslaMirrorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */; };
+		3955256390729DD3BDC716EF /* JellyfinSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60BE7A23C6611CF99E022360 /* JellyfinSettingsView.swift */; };
 		3ECD4E3A26C9E1345503D7CF /* SharedStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */; };
 		442A6E3059B010E1F86DDA91 /* Web in Resources */ = {isa = PBXBuildFile; fileRef = 700673281523D940262ADF2E /* Web */; };
 		4602E2991C3D32223C548EB7 /* WebPages.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2A2B9CD069594AC0B870C2A /* WebPages.swift */; };
 		4D9ADE62B5444867A52D8902 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */; };
 		4F2DA9958156D0AB952F11A1 /* TeslaMirrorBroadcast.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D634B6B58D5E09DF158E2A65 /* TeslaMirrorBroadcast.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		55B79058061353E6DB5ECC4F /* MediaConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C916E455151BBE6C685A65B /* MediaConfig.swift */; };
+		72E773DE93DEFC0E3B9121E2 /* JellyfinAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A33CBB2CB3B70A39CD5492E /* JellyfinAuth.swift */; };
 		79E3ED29CC573609BD508328 /* LocalNetworkPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */; };
 		8527D1EEFC750FC4D0F13DB8 /* BroadcastPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B48B274ED4502E642F0AD06 /* BroadcastPicker.swift */; };
 		92691362BA911E208E3A176E /* MirrorPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C25B67E49C70AEAD86FE95 /* MirrorPipeline.swift */; };
 		B43CD65B9558AE276624621B /* IPTVSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E903901274461CEA2D5DE6C1 /* IPTVSettingsView.swift */; };
 		C307DE8EA201AEED92536161 /* MirrorServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F2C2790D7A24DB3CB93184 /* MirrorServer.swift */; };
 		C916ED0B5BB6D40636068425 /* PlexSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F15A4F64A80A94476FDCB9 /* PlexSettingsView.swift */; };
+		D86392D7046D2FA365724549 /* JellyfinAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A33CBB2CB3B70A39CD5492E /* JellyfinAuth.swift */; };
 		D9D06C09FA1D8A1EFA7933E7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */; };
 		F17087491AD8F28BBA868A09 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */; };
 		F23B273972042EF3842F7976 /* SharedStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */; };
@@ -58,6 +61,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0A33CBB2CB3B70A39CD5492E /* JellyfinAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinAuth.swift; sourceTree = "<group>"; };
 		1178A3A8019479E61B452A89 /* TeslaMirror.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TeslaMirror.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		17C25B67E49C70AEAD86FE95 /* MirrorPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorPipeline.swift; sourceTree = "<group>"; };
 		1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaMirrorApp.swift; sourceTree = "<group>"; };
@@ -65,6 +69,7 @@
 		462911B144B89905C7022BA8 /* FMP4Muxer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FMP4Muxer.swift; sourceTree = "<group>"; };
 		4CDCB8ECEB86D5210918C69A /* Relay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Relay.swift; sourceTree = "<group>"; };
 		5C916E455151BBE6C685A65B /* MediaConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaConfig.swift; sourceTree = "<group>"; };
+		60BE7A23C6611CF99E022360 /* JellyfinSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinSettingsView.swift; sourceTree = "<group>"; };
 		61F3E9166FB73E4278B5A613 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M3UParser.swift; sourceTree = "<group>"; };
 		6B48B274ED4502E642F0AD06 /* BroadcastPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastPicker.swift; sourceTree = "<group>"; };
@@ -92,6 +97,7 @@
 			children = (
 				462911B144B89905C7022BA8 /* FMP4Muxer.swift */,
 				CB32D61F9059CBD8AFEDFFC5 /* H264Encoder.swift */,
+				0A33CBB2CB3B70A39CD5492E /* JellyfinAuth.swift */,
 				FFAD6C2D3021CDC1FEE018BF /* JPEGEncoder.swift */,
 				6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */,
 				5C916E455151BBE6C685A65B /* MediaConfig.swift */,
@@ -121,6 +127,7 @@
 				9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */,
 				61F3E9166FB73E4278B5A613 /* Info.plist */,
 				E903901274461CEA2D5DE6C1 /* IPTVSettingsView.swift */,
+				60BE7A23C6611CF99E022360 /* JellyfinSettingsView.swift */,
 				D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */,
 				93BBA4887D2CA6B7DBB34128 /* NetworkInfo.swift */,
 				C70156AF5D5B3B7010FF0FE4 /* PlexService.swift */,
@@ -249,6 +256,8 @@
 				8527D1EEFC750FC4D0F13DB8 /* BroadcastPicker.swift in Sources */,
 				D9D06C09FA1D8A1EFA7933E7 /* ContentView.swift in Sources */,
 				B43CD65B9558AE276624621B /* IPTVSettingsView.swift in Sources */,
+				D86392D7046D2FA365724549 /* JellyfinAuth.swift in Sources */,
+				3955256390729DD3BDC716EF /* JellyfinSettingsView.swift in Sources */,
 				79E3ED29CC573609BD508328 /* LocalNetworkPermission.swift in Sources */,
 				4D9ADE62B5444867A52D8902 /* M3UParser.swift in Sources */,
 				55B79058061353E6DB5ECC4F /* MediaConfig.swift in Sources */,
@@ -267,6 +276,7 @@
 				03E5F05FE83681A440B5B0E1 /* FMP4Muxer.swift in Sources */,
 				FE535A92B933ED98BFB79DAA /* H264Encoder.swift in Sources */,
 				2761440120A0C9F18F25B982 /* JPEGEncoder.swift in Sources */,
+				72E773DE93DEFC0E3B9121E2 /* JellyfinAuth.swift in Sources */,
 				F17087491AD8F28BBA868A09 /* M3UParser.swift in Sources */,
 				35CBDC02B1EF5EEA238A3A1B /* MediaConfig.swift in Sources */,
 				92691362BA911E208E3A176E /* MirrorPipeline.swift in Sources */,

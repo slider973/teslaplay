@@ -3,6 +3,7 @@ import Foundation
 /// Configuration du lecteur intégré, écrite par l'app dans l'App Group, lue par l'extension.
 ///
 /// - `plex.json`        : { "uri", "token", "clientId", "name" } — jamais envoyé au navigateur.
+/// - `jellyfin.json`    : { "uri", "token", "userId", "name", "deviceId" } — jeton jamais envoyé au navigateur.
 /// - `iptv-public.json` : { "groups": [...], "channels": [[nom, indexGroupe, logo], ...] } — servi tel quel.
 /// - `iptv-urls.txt`    : une URL de flux par ligne (même ordre) — peut contenir des identifiants,
 ///                        n'est jamais envoyé au navigateur ; lu ligne à ligne (mémoire minimale).
@@ -12,6 +13,33 @@ enum MediaConfig {
         var token: String
         var clientId: String
         var name: String
+    }
+
+    struct Jellyfin: Codable {
+        var uri: String
+        var token: String
+        var userId: String
+        var name: String
+        var deviceId: String
+    }
+
+    static func jellyfin() -> Jellyfin? {
+        guard let url = file("jellyfin.json"), let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(Jellyfin.self, from: data)
+    }
+
+    static func saveJellyfin(_ config: Jellyfin?) {
+        guard let url = file("jellyfin.json") else { return }
+        if let config, let data = try? JSONEncoder().encode(config) {
+            try? data.write(to: url, options: .atomic)
+        } else {
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+
+    static func jellyfinHeaders(_ jf: Jellyfin) -> [String: String] {
+        ["Authorization": JellyfinAuth.authorizationHeader(deviceId: jf.deviceId, token: jf.token),
+         "X-Emby-Token": jf.token]
     }
 
     static var groupDirectory: URL? {

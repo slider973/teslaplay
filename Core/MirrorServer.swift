@@ -49,9 +49,14 @@ final class MirrorServer {
     private lazy var relay: Relay = {
         let relay = Relay(queue: queue)
         relay.headersForURL = { url in
-            guard let plex = MediaConfig.plex(), let base = URL(string: plex.uri),
-                  url.host?.lowercased() == base.host?.lowercased() else { return [:] }
-            return MediaConfig.plexHeaders(plex)
+            // Identifiants injectés uniquement vers l'hôte du serveur configuré.
+            func sameHost(_ uri: String) -> Bool {
+                URL(string: uri)?.host?.lowercased() == url.host?.lowercased()
+            }
+            var headers: [String: String] = [:]
+            if let plex = MediaConfig.plex(), sameHost(plex.uri) { headers.merge(MediaConfig.plexHeaders(plex)) { $1 } }
+            if let jf = MediaConfig.jellyfin(), sameHost(jf.uri) { headers.merge(MediaConfig.jellyfinHeaders(jf)) { $1 } }
+            return headers
         }
         return relay
     }()
@@ -236,6 +241,12 @@ final class MirrorServer {
             }
             return relay.start(conn: conn, url: url, method: method, clientHeaders: headers)
         }
+        if path.hasPrefix("/jf/") {
+            guard let jf = MediaConfig.jellyfin(), let url = URL(string: jf.uri + target.dropFirst(3)) else {
+                return respond(conn, status: "404 Not Found", type: "text/plain", body: Data("Jellyfin non configuré dans l'app".utf8))
+            }
+            return relay.start(conn: conn, url: url, method: method, clientHeaders: headers)
+        }
         if path.hasPrefix("/iptv/") {
             guard let index = Int(path.dropFirst(6)), let url = MediaConfig.iptvURL(index: index) else {
                 return respond(conn, status: "404 Not Found", type: "text/plain", body: Data("Chaîne inconnue".utf8))
@@ -276,6 +287,11 @@ final class MirrorServer {
             let json = plex.map { #"{"configured":true,"name":"\#($0.name.replacingOccurrences(of: "\"", with: ""))"}"# }
                 ?? #"{"configured":false}"#
             respond(conn, status: "200 OK", type: "application/json", body: Data(json.utf8))
+        case "/api/jellyfin":
+            var obj: [String: Any] = ["configured": false]
+            if let jf = MediaConfig.jellyfin() { obj = ["configured": true, "name": jf.name, "userId": jf.userId] }
+            respond(conn, status: "200 OK", type: "application/json",
+                    body: (try? JSONSerialization.data(withJSONObject: obj)) ?? Data("{}".utf8))
         case "/health":
             respond(conn, status: "200 OK", type: "text/plain", body: Data("ok".utf8))
         case "/status":

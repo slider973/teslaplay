@@ -95,6 +95,7 @@ enum WebPages {
       <a class="tile main" href="/mirror">Recopier l'écran de l'iPhone</a>
       <a class="tile main" href="/tv" style="background:#1565c0;border-color:#1e88e5">TV (IPTV)</a>
       <a class="tile main" href="/tv#plex" style="background:#e5a00d;border-color:#f0b429;color:#111">Plex</a>
+      <a class="tile main" href="/tv#jellyfin" style="background:#6a1b9a;border-color:#8e24aa">Jellyfin</a>
       <a class="tile alt" href="/mjpeg">Recopie (mode compatibilité)</a>
     </div>
 
@@ -282,6 +283,7 @@ enum WebPages {
       <a href="/">⌂</a>
       <button id="tabTV" class="on">TV</button>
       <button id="tabPlex">Plex</button>
+      <button id="tabJF">Jellyfin</button>
       <input id="q" type="search" placeholder="Rechercher…">
     </header>
     <div id="crumbs"></div>
@@ -377,7 +379,9 @@ enum WebPages {
     }
     crumbs.onclick = function (e) {
       var l = e.target.getAttribute('data-l'); if (l == null) return;
-      e.preventDefault(); var lvl = plexStack[+l]; plexStack = plexStack.slice(0, +l); plexOpen(lvl);
+      e.preventDefault();
+      if (mode === 'jf') { var j = jfStack[+l]; jfStack = jfStack.slice(0, +l); return jfOpen(j); }
+      var lvl = plexStack[+l]; plexStack = plexStack.slice(0, +l); plexOpen(lvl);
     };
     var plexItems = [];
     function renderPlex(level, mc) {
@@ -419,11 +423,66 @@ enum WebPages {
       play('/plex/video/:/transcode/universal/start.m3u8?' + q, it.title, true);
     }
 
+    // ---------- Jellyfin ----------
+    var jf = null, jfStack = [], jfItems = [];
+    function jfList(id, type) {
+      var sort = (type === 'Series' || type === 'Season') ? 'ParentIndexNumber,IndexNumber' : 'SortName';
+      return '/jf/Users/' + jf.userId + '/Items?ParentId=' + id + '&SortBy=' + sort + '&Limit=500&Fields=PrimaryImageAspectRatio';
+    }
+    function loadJF() {
+      groupsEl.style.display = 'none';
+      getJSON('/api/jellyfin', function (s) {
+        if (!s.configured) { crumbs.innerHTML = ''; grid.innerHTML = '<div class="msg">Jellyfin n\'est pas connecté. Ouvrez l\'app TeslaMirror sur l\'iPhone › Jellyfin.</div>'; return; }
+        jf = s; jfStack = [];
+        jfOpen({ title: s.name || 'Jellyfin', url: '/jf/Users/' + s.userId + '/Views', kind: 'views' });
+      });
+    }
+    function jfOpen(level) {
+      jfStack.push(level);
+      var h = '';
+      for (var i = 0; i < jfStack.length; i++) h += '<a href="#" data-l="' + i + '">' + esc(jfStack[i].title) + '</a>' + (i < jfStack.length - 1 ? '› ' : '');
+      crumbs.innerHTML = h;
+      grid.innerHTML = '<div class="msg">Chargement…</div>';
+      getJSON(level.url, function (d) { renderJF(level, d); },
+              function (e) { grid.innerHTML = '<div class="msg">Erreur Jellyfin : ' + esc(e) + '</div>'; });
+    }
+    function renderJF(level, d) {
+      var h = '', q = $('q').value.toLowerCase();
+      jfItems = [];
+      if (level.kind === 'views') {
+        jfItems.push({ type: 'dir', title: 'Reprendre', url: '/jf/Users/' + jf.userId + '/Items/Resume?MediaTypes=Video&Limit=60' });
+      }
+      (d.Items || []).forEach(function (m) {
+        if (q && (m.Name || '').toLowerCase().indexOf(q) < 0) return;
+        var it = { type: m.Type, title: m.Name, id: m.Id };
+        if (m.Type === 'Episode') it.title = (m.SeriesName ? m.SeriesName + ' · ' : '') + 'S' + (m.ParentIndexNumber || '') + 'E' + (m.IndexNumber || '') + ' ' + m.Name;
+        if (m.ImageTags && m.ImageTags.Primary) it.thumb = '/jf/Items/' + m.Id + '/Images/Primary?maxHeight=450&quality=80';
+        else if (m.SeriesId && m.SeriesPrimaryImageTag) it.thumb = '/jf/Items/' + m.SeriesId + '/Images/Primary?maxHeight=450&quality=80';
+        if (!/^(Movie|Episode|Video|MusicVideo|TvChannel)$/.test(m.Type)) it.url = jfList(m.Id, m.Type);
+        jfItems.push(it);
+      });
+      jfItems.forEach(function (it, i) {
+        if (it.type === 'dir') { h += '<div class="card" data-j="' + i + '" style="padding:28px 10px;font-size:20px">' + esc(it.title) + '</div>'; return; }
+        h += '<div class="card poster" data-j="' + i + '">' + (it.thumb ? '<img loading="lazy" src="' + it.thumb + '">' : '<img alt="">') + esc(it.title) + '</div>';
+      });
+      grid.innerHTML = h || '<div class="msg">Vide.</div>';
+    }
+    function jfClick(i) {
+      var it = jfItems[i]; if (!it) return;
+      if (it.url) return jfOpen({ title: it.title, url: it.url, kind: 'list' });
+      var sess = 'tm' + Date.now();
+      play('/jf/Videos/' + it.id + '/master.m3u8?MediaSourceId=' + it.id +
+           '&VideoCodec=h264&AudioCodec=aac,mp3&MaxStreamingBitrate=8000000&TranscodingMaxAudioChannels=2' +
+           '&SegmentContainer=ts&MinSegments=1&BreakOnNonKeyFrames=true&PlaySessionId=' + sess + '&DeviceId=teslamirror',
+           it.title, true);
+    }
+
     grid.onclick = function (e) {
-      var el = e.target; while (el && el !== grid && !el.getAttribute('data-i') && !el.getAttribute('data-p') && el.id !== 'more') el = el.parentNode;
+      var el = e.target; while (el && el !== grid && !el.getAttribute('data-i') && !el.getAttribute('data-p') && !el.getAttribute('data-j') && el.id !== 'more') el = el.parentNode;
       if (!el || el === grid) return;
       if (el.id === 'more') return renderTV(true);
       if (el.getAttribute('data-i') != null) { var i = +el.getAttribute('data-i'); return play('/iptv/' + i, iptv.channels[i][0], false); }
+      if (el.getAttribute('data-j') != null) return jfClick(+el.getAttribute('data-j'));
       plexClick(+el.getAttribute('data-p'));
     };
 
@@ -497,19 +556,22 @@ enum WebPages {
     // ---------- Onglets ----------
     function setMode(m) {
       mode = m; $('tabTV').className = m === 'tv' ? 'on' : ''; $('tabPlex').className = m === 'plex' ? 'on' : '';
-      if (m === 'tv') loadTV(); else { plexStack = []; loadPlex(); }
+      $('tabJF').className = m === 'jf' ? 'on' : '';
+      if (m === 'tv') loadTV(); else if (m === 'jf') loadJF(); else { plexStack = []; loadPlex(); }
     }
     $('tabTV').onclick = function () { setMode('tv'); };
     $('tabPlex').onclick = function () { setMode('plex'); };
+    $('tabJF').onclick = function () { setMode('jf'); };
     var qTimer = null;
     $('q').oninput = function () {
       clearTimeout(qTimer);
       qTimer = setTimeout(function () {
         if (mode === 'tv' && iptv) renderTV();
         else if (mode === 'plex' && plexStack.length) { var l = plexStack.pop(); plexOpen(l); }
+        else if (mode === 'jf' && jfStack.length) { var j = jfStack.pop(); jfOpen(j); }
       }, 250);
     };
-    setMode(location.hash === '#plex' ? 'plex' : 'tv');
+    setMode(location.hash === '#plex' ? 'plex' : location.hash === '#jellyfin' ? 'jf' : 'tv');
     </script></body></html>
     """#
 }

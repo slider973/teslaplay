@@ -26,6 +26,7 @@ targets:
       - Core/SharedStatus.swift
       - Core/MediaConfig.swift
       - Core/M3UParser.swift
+      - Core/JellyfinAuth.swift
     entitlements:
       path: App/TeslaMirror.entitlements
       properties:

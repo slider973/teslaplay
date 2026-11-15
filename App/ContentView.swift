@@ -64,6 +64,10 @@ struct ContentView: View {
                     NavigationLink { PlexSettingsView() } label: {
                         settingsRow("Plex", detail: "Films et séries de votre serveur", icon: "play.rectangle")
                     }
+                    Divider()
+                    NavigationLink { JellyfinSettingsView() } label: {
+                        settingsRow("Jellyfin", detail: "Films et séries de votre serveur", icon: "film.stack")
+                    }
                 }
                 .background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
 

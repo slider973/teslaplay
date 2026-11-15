@@ -32,6 +32,21 @@ if let dir = env["TM_MEDIA_DIR"] {
         sem.wait()
     }
 }
+// Jellyfin de test : TM_JF="https://serveur|utilisateur|motdepasse"
+if let jfSpec = env["TM_JF"], MediaConfig.overrideDirectory != nil {
+    let parts = jfSpec.components(separatedBy: "|")
+    let sem = DispatchSemaphore(value: 0)
+    Task {
+        do {
+            let cfg = try await JellyfinAuth.login(server: parts[0], username: parts.count > 1 ? parts[1] : "",
+                                                   password: parts.count > 2 ? parts[2] : "", deviceId: "tm-harness")
+            MediaConfig.saveJellyfin(cfg)
+            print("Jellyfin : connecté à \(cfg.name)")
+        } catch { print("Jellyfin erreur : \(error)") }
+        sem.signal()
+    }
+    sem.wait()
+}
 var dump = Data()
 var initCount = 0, keyCount = 0, fragCount = 0
 pipeline.onInitSegment = { s in
