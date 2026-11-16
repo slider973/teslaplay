@@ -38,6 +38,7 @@
 		D9D06C09FA1D8A1EFA7933E7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */; };
 		F17087491AD8F28BBA868A09 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */; };
 		F23B273972042EF3842F7976 /* SharedStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */; };
+		FA6F0E00A1D5D773A0FB08EE /* AACEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98BC1480236CE4A1BBD3CCD6 /* AACEncoder.swift */; };
 		FE535A92B933ED98BFB79DAA /* H264Encoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB32D61F9059CBD8AFEDFFC5 /* H264Encoder.swift */; };
 /* End PBXBuildFile section */
 
@@ -94,6 +95,7 @@
 		7C125862B181B4558B23FDDB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		93BBA4887D2CA6B7DBB34128 /* NetworkInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInfo.swift; sourceTree = "<group>"; };
+		98BC1480236CE4A1BBD3CCD6 /* AACEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AACEncoder.swift; sourceTree = "<group>"; };
 		9F21F3937A66F0D7904B1B3D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		AE057A6AD014B3D08C4D6BBD /* TeslaMirrorBroadcast.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaMirrorBroadcast.entitlements; sourceTree = "<group>"; };
 		B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStatus.swift; sourceTree = "<group>"; };
@@ -115,6 +117,7 @@
 		1E3BB3AC68E093471056390F /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				98BC1480236CE4A1BBD3CCD6 /* AACEncoder.swift */,
 				462911B144B89905C7022BA8 /* FMP4Muxer.swift */,
 				CB32D61F9059CBD8AFEDFFC5 /* H264Encoder.swift */,
 				0A33CBB2CB3B70A39CD5492E /* JellyfinAuth.swift */,
@@ -342,6 +345,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA6F0E00A1D5D773A0FB08EE /* AACEncoder.swift in Sources */,
 				03E5F05FE83681A440B5B0E1 /* FMP4Muxer.swift in Sources */,
 				FE535A92B933ED98BFB79DAA /* H264Encoder.swift in Sources */,
 				2761440120A0C9F18F25B982 /* JPEGEncoder.swift in Sources */,

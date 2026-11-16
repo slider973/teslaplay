@@ -121,6 +121,49 @@ func makeFrame(_ n: Int) -> CVPixelBuffer {
     return buf
 }
 
+/// Son synthétique au format ReplayKit typique : Int16 big-endian, 44,1 kHz, stéréo entrelacé.
+/// La440 Hz à gauche, 660 Hz à droite.
+func makeAudio(startFrame: Int, frames: Int) -> CMSampleBuffer? {
+    let rate = 44_100.0
+    var asbd = AudioStreamBasicDescription(mSampleRate: rate, mFormatID: kAudioFormatLinearPCM,
+        mFormatFlags: kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsBigEndian | kAudioFormatFlagIsPacked,
+        mBytesPerPacket: 4, mFramesPerPacket: 1, mBytesPerFrame: 4, mChannelsPerFrame: 2, mBitsPerChannel: 16, mReserved: 0)
+    var fmt: CMAudioFormatDescription?
+    guard CMAudioFormatDescriptionCreate(allocator: nil, asbd: &asbd, layoutSize: 0, layout: nil, magicCookieSize: 0,
+                                         magicCookie: nil, extensions: nil, formatDescriptionOut: &fmt) == noErr, let fmt else { return nil }
+    var bytes = [UInt8](); bytes.reserveCapacity(frames * 4)
+    for i in 0..<frames {
+        let t = Double(startFrame + i) / rate
+        for f in [440.0, 660.0] {
+            let v = UInt16(bitPattern: Int16(sin(2 * .pi * f * t) * 8000))
+            bytes.append(UInt8(v >> 8)); bytes.append(UInt8(v & 0xFF))
+        }
+    }
+    var block: CMBlockBuffer?
+    guard CMBlockBufferCreateWithMemoryBlock(allocator: nil, memoryBlock: nil, blockLength: bytes.count, blockAllocator: nil,
+                                             customBlockSource: nil, offsetToData: 0, dataLength: bytes.count, flags: 0,
+                                             blockBufferOut: &block) == noErr, let block,
+          CMBlockBufferReplaceDataBytes(with: bytes, blockBuffer: block, offsetIntoDestination: 0, dataLength: bytes.count) == noErr
+    else { return nil }
+    var sb: CMSampleBuffer?
+    CMAudioSampleBufferCreateReadyWithPacketDescriptions(allocator: nil, dataBuffer: block, formatDescription: fmt,
+        sampleCount: frames, presentationTimeStamp: CMTime(value: CMTimeValue(startFrame), timescale: 44_100),
+        packetDescriptions: nil, sampleBufferOut: &sb)
+    return sb
+}
+DispatchQueue(label: "harness.audio").async {
+    var frame = 0
+    let t0 = Date()
+    while true {
+        // Cadence réelle : on produit ce qui correspond au temps écoulé (paquets de 1024).
+        while Double(frame) / 44_100 < Date().timeIntervalSince(t0) {
+            if let sb = makeAudio(startFrame: frame, frames: 1024) { pipeline.process(audio: sb) }
+            frame += 1024
+        }
+        Thread.sleep(forTimeInterval: 0.01)
+    }
+}
+
 print("Harnais sur http://127.0.0.1:\(port)  (\(Int(seconds)) s, cadence irrégulière + pauses)")
 let start = Date()
 var n = 0

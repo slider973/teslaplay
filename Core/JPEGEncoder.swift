@@ -20,7 +20,7 @@ final class JPEGEncoder {
         autoreleasepool {
             let srcW = CVPixelBufferGetWidth(pixelBuffer)
             let srcH = CVPixelBufferGetHeight(pixelBuffer)
-            let (w, h) = H264Encoder.targetSize(width: srcW, height: srcH, shortSide: shortSide)
+            let (w, h) = H264Encoder.targetSize(width: srcW, height: srcH, maxLong: shortSide * 16 / 9, maxShort: shortSide)
             var image = CIImage(cvPixelBuffer: pixelBuffer)
             if w != srcW || h != srcH {
                 image = image.transformed(by: CGAffineTransform(scaleX: CGFloat(w) / CGFloat(srcW),

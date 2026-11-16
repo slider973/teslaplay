@@ -10,6 +10,7 @@ struct ContentView: View {
     @StateObject private var testServer = TestServer()
     @StateObject private var scanner = NetworkScanner()
     @StateObject private var tunnel = TunnelController()
+    @AppStorage("mirrorQuality", store: UserDefaults(suiteName: SharedStatus.appGroupID)) private var quality = "haute"
     @State private var sharedFileExists = false
     @Environment(\.scenePhase) private var scenePhase
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
@@ -43,6 +44,16 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity).padding()
                     .background(status == nil ? Color.red : Color.gray, in: RoundedRectangle(cornerRadius: 14))
                     .overlay { BroadcastPicker() }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("Qualité de la recopie", selection: $quality) {
+                        Text("Haute — 1080p").tag("haute")
+                        Text("Standard — 720p").tag("standard")
+                    }
+                    .pickerStyle(.segmented)
+                    Text("Appliquée au prochain démarrage de la diffusion. Le son se lance dans la Tesla avec le bouton « 🔊 Activer le son ». Repassez en Standard si la diffusion s'arrête seule.")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
 
                 VStack(spacing: 12) {
                     Picker("Réseau", selection: $selectedIP) {

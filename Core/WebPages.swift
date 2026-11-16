@@ -148,6 +148,8 @@ enum WebPages {
     </head><body>
     <div id="msg">En attente de l'iPhone…</div>
     <video id="m" muted autoplay playsinline disablepictureinpicture></video>
+    <audio id="snd" playsinline></audio>
+    <button id="sound" style="position:fixed;right:16px;bottom:16px;z-index:5;font-size:22px;padding:14px 22px;border-radius:14px;border:1px solid #444;background:#1e1e24cc;color:#fff">🔊 Activer le son</button>
     <div id="hud"><button id="rot">↻</button><button id="fs">Plein écran</button><a href="/mjpeg">MJPEG</a><span id="info">H.264</span></div>
     <script>
     """# + commonScript + #"""
@@ -239,6 +241,72 @@ enum WebPages {
     }, 2000);
 
     if (MS && window.WebSocket) connect();
+
+    // ---------- Son (canal séparé /wsa, AAC en fMP4) ----------
+    // Lecture lancée par un toucher : le navigateur bloque le son sans geste de l'utilisateur.
+    var a = $('snd'), ams = null, asb = null, aq = [], aws = null, audioOn = false;
+    function aReset(codec) {
+      var mime = 'audio/mp4; codecs="' + codec + '"';
+      if (!MS.isTypeSupported(mime)) { $('sound').textContent = '🔇 Son non pris en charge'; return; }
+      aq = []; asb = null;
+      ams = new MS();
+      ams.addEventListener('sourceopen', function () {
+        try {
+          asb = ams.addSourceBuffer(mime); asb.mode = 'segments';
+          asb.addEventListener('updateend', function () { aEdge(); aPump(); });
+          aPump();
+        } catch (e) { aRestart(); }
+      });
+      a.src = URL.createObjectURL(ams);
+      var p = a.play(); if (p && p.catch) p.catch(function () {});
+    }
+    function aPump() {
+      if (!asb || asb.updating || !aq.length || !ams || ams.readyState !== 'open') return;
+      var b = asb.buffered;
+      if (b.length && a.currentTime - b.start(0) > 20) { try { asb.remove(0, a.currentTime - 10); return; } catch (e) {} }
+      try { asb.appendBuffer(aq.shift()); } catch (e) { if (e.name === 'QuotaExceededError') aq = []; else aRestart(); }
+    }
+    // Bord live : léger accéléré si on prend du retard (inaudible), saut seulement si > 1,5 s.
+    function aEdge() {
+      var b = a.buffered; if (!b.length) return;
+      var lag = b.end(b.length - 1) - a.currentTime;
+      if (a.currentTime < b.start(b.length - 1) || lag > 1.5) { a.currentTime = Math.max(b.start(b.length - 1), b.end(b.length - 1) - 0.15); }
+      a.playbackRate = lag > 0.45 ? 1.08 : 1.0;
+      if (a.paused) { var p = a.play(); if (p && p.catch) p.catch(function () {}); }
+    }
+    function aConnect() {
+      aws = new WebSocket('ws://' + location.host + '/wsa');
+      aws.binaryType = 'arraybuffer';
+      aws.onmessage = function (ev) {
+        if (typeof ev.data === 'string') {
+          var m = null; try { m = JSON.parse(ev.data); } catch (e) {}
+          if (m && m.type === 'init') aReset(m.codec);
+          return;
+        }
+        if (!ams) return;
+        aq.push(ev.data);
+        if (aq.length > 60) { aRestart(); return; }
+        aPump();
+      };
+      aws.onclose = function () { if (audioOn) setTimeout(aRestart, 1000); };
+    }
+    function aRestart() {
+      if (aws) { aws.onclose = null; try { aws.close(); } catch (e) {} }
+      ams = null; asb = null; aq = [];
+      if (audioOn) aConnect();
+    }
+    $('sound').onclick = function (e) {
+      e.stopPropagation();
+      audioOn = !audioOn;
+      if (audioOn) {
+        var p = a.play(); if (p && p.catch) p.catch(function () {});   // débloque la lecture (geste)
+        aConnect();
+        this.textContent = '🔇 Couper le son';
+      } else {
+        aRestart(); a.pause(); a.removeAttribute('src'); a.load();
+        this.textContent = '🔊 Activer le son';
+      }
+    };
     </script></body></html>
     """#
 

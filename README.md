@@ -92,7 +92,7 @@ Safari macOS a été testé avec le harnais : il lit le flux H.264. Sur iPhone o
 1. Sur l'iPhone, activez *Réglages → Partage de connexion → Autoriser d'autres utilisateurs*. Activer *Maximiser la compatibilité* peut aider.
 2. Sur la Tesla, connectez-vous au Wi‑Fi de l'iPhone (*Contrôles → Wi‑Fi*).
 3. Dans TeslaMirror, touchez **Accès Tesla › Activer** (une seule fois : iOS demande d'autoriser la configuration VPN ; le tunnel reste ensuite actif, relancé automatiquement). Votre VPN habituel doit être coupé : iOS n'en active qu'un.
-4. Lancez la diffusion depuis TeslaMirror, puis ouvrez dans la Tesla `http://100.99.9.9:8080`. Le bouton *Plein écran* et le bouton ↻ apparaissent quand on touche l'écran.
+4. Lancez la diffusion depuis TeslaMirror, puis ouvrez dans la Tesla `http://100.99.9.9:8080`. Touchez **🔊 Activer le son** pour entendre le son de l'iPhone dans la voiture (AAC, canal séparé, environ 0,3 à 0,6 s de décalage ; le son des contenus protégés par DRM reste muet). Qualité réglable dans l'app : Haute (1080p, 6 Mbit/s, par défaut) ou Standard (720p, 3 Mbit/s). Le bouton *Plein écran* et le bouton ↻ apparaissent quand on touche l'écran.
 
 ### Dépannage
 

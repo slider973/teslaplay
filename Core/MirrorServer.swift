@@ -10,6 +10,7 @@ import CryptoKit
 ///   GET /mjpeg   → page MJPEG (<img src="/stream">)
 ///   GET /stream  → flux multipart/x-mixed-replace (JPEG)
 ///   GET /ws      → WebSocket : texte {"type":"init","codec":…} puis init segment fMP4, puis fragments
+///   GET /wsa     → WebSocket audio : {"type":"init","codec":"mp4a.40.2"}, init fMP4 AAC, puis fragments
 ///   GET /status  → JSON (rotation, clients…)
 ///   GET /health  → "ok"
 ///
@@ -29,6 +30,11 @@ final class MirrorServer {
     private var pending: [ObjectIdentifier: NWConnection] = [:]
     private var mjpegClients: [ObjectIdentifier: MJPEGClient] = [:]
     private var wsClients: [ObjectIdentifier: WSClient] = [:]
+    /// Clients audio : comptés à part (ni dans maxClients ni dans hasMirrorClients).
+    private var audioClients: [ObjectIdentifier: WSClient] = [:]
+    private var audioInit: AACEncoder.InitSegment?
+    static let maxAudioClients = 4
+    static let maxPendingAudioBytes = 200_000
 
     private var lastJPEG: Data?
     private var initSegment: FMP4Muxer.InitSegment?
@@ -43,6 +49,7 @@ final class MirrorServer {
     private var _mjpegCount = 0
     private var _clientCount = 0
     private var _wsCount = 0
+    private var _audioCount = 0
 
     /// Dossier des fichiers statiques (`Web/`, contenant lib/hls.min.js et lib/mpegts.js).
     var webRoot: URL?
@@ -70,6 +77,7 @@ final class MirrorServer {
 
     var hasMJPEGClients: Bool { lock.lock(); defer { lock.unlock() }; return _mjpegCount > 0 }
     var hasMirrorClients: Bool { lock.lock(); defer { lock.unlock() }; return _wsCount > 0 }
+    var hasAudioClients: Bool { lock.lock(); defer { lock.unlock() }; return _audioCount > 0 }
 
     // MARK: - Cycle de vie
 
@@ -112,7 +120,9 @@ final class MirrorServer {
             pending.values.forEach { $0.cancel() }
             mjpegClients.values.forEach { $0.conn.cancel() }
             wsClients.values.forEach { $0.conn.cancel() }
-            pending.removeAll(); mjpegClients.removeAll(); wsClients.removeAll()
+            audioClients.values.forEach { $0.conn.cancel() }
+            pending.removeAll(); mjpegClients.removeAll(); wsClients.removeAll(); audioClients.removeAll()
+            audioInit = nil
             gop.removeAll(); gopBytes = 0; lastJPEG = nil; initSegment = nil
             updateCounts()
         }
@@ -136,6 +146,27 @@ final class MirrorServer {
                 client.needsKeyframe = true
             }
         }
+    }
+
+    func publishAudioInit(_ segment: AACEncoder.InitSegment) {
+        queue.async { [self] in
+            audioInit = segment
+            for client in audioClients.values { sendAudioInit(segment, to: client) }
+        }
+    }
+
+    func publishAudioFragment(_ fragment: Data) {
+        queue.async { [self] in
+            // Client lent : on jette (un trou audio vaut mieux qu'un retard qui s'accumule).
+            for client in audioClients.values where client.pendingBytes < Self.maxPendingAudioBytes {
+                sendWS(opcode: 0x2, payload: fragment, to: client)
+            }
+        }
+    }
+
+    private func sendAudioInit(_ segment: AACEncoder.InitSegment, to client: WSClient) {
+        sendWS(opcode: 0x1, payload: Data("{\"type\":\"init\",\"codec\":\"\(segment.codec)\"}".utf8), to: client)
+        sendWS(opcode: 0x2, payload: segment.data, to: client)
     }
 
     func publishFragment(_ fragment: Data, isKeyframe: Bool) {
@@ -185,11 +216,12 @@ final class MirrorServer {
         if let c = pending.removeValue(forKey: id) { c.cancel() }
         if let c = mjpegClients.removeValue(forKey: id) { c.conn.cancel() }
         if let c = wsClients.removeValue(forKey: id) { c.conn.cancel() }
+        if let c = audioClients.removeValue(forKey: id) { c.conn.cancel() }
         updateCounts()
     }
 
     private func updateCounts() {
-        lock.lock(); _mjpegCount = mjpegClients.count; _clientCount = mjpegClients.count + wsClients.count; _wsCount = wsClients.count; lock.unlock()
+        lock.lock(); _mjpegCount = mjpegClients.count; _clientCount = mjpegClients.count + wsClients.count; _wsCount = wsClients.count; _audioCount = audioClients.count; lock.unlock()
     }
 
     var clientCountSnapshot: Int { lock.lock(); defer { lock.unlock() }; return _clientCount }
@@ -277,6 +309,11 @@ final class MirrorServer {
                 return respond(conn, status: "400 Bad Request", type: "text/plain", body: Data("WebSocket attendu".utf8))
             }
             startWebSocket(conn, key: key)
+        case "/wsa":
+            guard headers["upgrade"]?.lowercased() == "websocket", let key = headers["sec-websocket-key"] else {
+                return respond(conn, status: "400 Bad Request", type: "text/plain", body: Data("WebSocket attendu".utf8))
+            }
+            startAudioWebSocket(conn, key: key)
         case "/tv":
             respond(conn, status: "200 OK", type: "text/html; charset=utf-8", body: Data(WebPages.tv.utf8))
         case "/api/iptv":
@@ -317,6 +354,8 @@ final class MirrorServer {
             "rotation": rotation,
             "mjpegClients": mjpegClients.count,
             "wsClients": wsClients.count,
+            "audioClients": audioClients.count,
+            "audio": audioInit != nil,
             "frames": framesSent,
             "relays": relay.activeJobs,
             "uptime": Int(Date().timeIntervalSince(startDate)),
@@ -404,6 +443,23 @@ final class MirrorServer {
             client.needsKeyframe = gop.isEmpty
         }
         if gop.isEmpty { onKeyframeNeeded?() }
+    }
+
+    private func startAudioWebSocket(_ conn: NWConnection, key: String) {
+        guard audioClients.count < Self.maxAudioClients else {
+            return respond(conn, status: "503 Service Unavailable", type: "text/plain", body: Data("Trop de clients".utf8))
+        }
+        let id = ObjectIdentifier(conn)
+        pending.removeValue(forKey: id)
+        let digest = Insecure.SHA1.hash(data: Data((key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").utf8))
+        let header = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+            + "Sec-WebSocket-Accept: \(Data(digest).base64EncodedString())\r\n\r\n"
+        conn.send(content: Data(header.utf8), completion: .contentProcessed { _ in })
+        let client = WSClient(conn)
+        audioClients[id] = client
+        updateCounts()
+        readWebSocket(client)
+        if let segment = audioInit { sendAudioInit(segment, to: client) }
     }
 
     private func sendInit(_ segment: FMP4Muxer.InitSegment, to client: WSClient) {

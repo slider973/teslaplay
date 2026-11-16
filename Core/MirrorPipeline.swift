@@ -10,8 +10,15 @@ final class MirrorPipeline {
     static let h264FPS = 30.0
 
     let server: MirrorServer
-    private let jpegEncoder = JPEGEncoder(quality: 0.5, shortSide: 720)
-    private let h264Encoder = H264Encoder(shortSide: 720, fps: Int(MirrorPipeline.h264FPS), bitrate: 3_000_000)
+    /// Qualité choisie dans l'app (App Group) : « haute » = 1080p 6 Mbit/s (défaut), « standard » = 720p 3 Mbit/s.
+    static var highQuality: Bool {
+        UserDefaults(suiteName: SharedStatus.appGroupID)?.string(forKey: "mirrorQuality") != "standard"
+    }
+    private let jpegEncoder = JPEGEncoder(quality: 0.6, shortSide: 720)
+    private let h264Encoder = MirrorPipeline.highQuality
+        ? H264Encoder(maxSize: (1920, 1080), fps: Int(MirrorPipeline.h264FPS), bitrate: 6_000_000)
+        : H264Encoder(maxSize: (1280, 720), fps: Int(MirrorPipeline.h264FPS), bitrate: 3_000_000)
+    private let aacEncoder = AACEncoder()
     private var lastJPEGTime = -Double.infinity
     private var lastH264Time = -Double.infinity
     private var frameCount = 0
@@ -31,6 +38,8 @@ final class MirrorPipeline {
             self?.onFragment?(data, isKey)
         }
         server.onKeyframeNeeded = { [weak h264Encoder] in h264Encoder?.requestKeyframe() }
+        aacEncoder.onInit = { [weak self] in self?.server.publishAudioInit($0) }
+        aacEncoder.onFragment = { [weak self] in self?.server.publishAudioFragment($0) }
     }
 
     func start(onFailure: @escaping (Error) -> Void) throws {
@@ -40,6 +49,12 @@ final class MirrorPipeline {
     func stop() {
         h264Encoder.invalidate()
         server.stop()
+    }
+
+    /// Son de l'app (ReplayKit `.audioApp`) : encodé seulement si un navigateur l'écoute.
+    func process(audio sampleBuffer: CMSampleBuffer) {
+        guard server.hasAudioClients else { return }
+        aacEncoder.encode(sampleBuffer)
     }
 
     /// À appeler pour chaque image ReplayKit. `rotation` en degrés horaires (0/90/180/270)

@@ -38,6 +38,7 @@ final class SampleHandler: RPBroadcastSampleHandler {
     }
 
     override func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, with sampleBufferType: RPSampleBufferType) {
+        if sampleBufferType == .audioApp { pipeline?.process(audio: sampleBuffer); return }
         guard sampleBufferType == .video,
               let pipeline,
               let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }

@@ -10,7 +10,7 @@ final class H264Encoder {
     var onInit: ((FMP4Muxer.InitSegment) -> Void)?
     var onFragment: ((Data, Bool) -> Void)?
 
-    private let shortSide: Int
+    private let maxSize: (Int, Int)
     private let fps: Int
     private let bitrate: Int
     private var session: VTCompressionSession?
@@ -20,8 +20,10 @@ final class H264Encoder {
     private let lock = NSLock()
     private var forceKeyframe = false
 
-    init(shortSide: Int = 720, fps: Int = 30, bitrate: Int = 3_000_000) {
-        self.shortSide = shortSide
+    /// `maxSize` : boîte (grand côté, petit côté) dans laquelle l'image est inscrite, quelle que
+    /// soit l'orientation. 1920×1080 reste dans le niveau H.264 4.x décodable par la voiture.
+    init(maxSize: (Int, Int) = (1280, 720), fps: Int = 30, bitrate: Int = 3_000_000) {
+        self.maxSize = maxSize
         self.fps = fps
         self.bitrate = bitrate
     }
@@ -35,7 +37,7 @@ final class H264Encoder {
     func encode(_ pixelBuffer: CVPixelBuffer, pts: CMTime) {
         let (w, h) = Self.targetSize(width: CVPixelBufferGetWidth(pixelBuffer),
                                      height: CVPixelBufferGetHeight(pixelBuffer),
-                                     shortSide: shortSide)
+                                     maxLong: maxSize.0, maxShort: maxSize.1)
         if session == nil || w != width || h != height {
             invalidate()
             createSession(width: w, height: h)
@@ -64,9 +66,10 @@ final class H264Encoder {
         session = nil
     }
 
-    /// Taille cible : petit côté = `shortSide` (720p), dimensions paires, jamais d'agrandissement.
-    static func targetSize(width: Int, height: Int, shortSide: Int) -> (Int, Int) {
-        let scale = min(1.0, Double(shortSide) / Double(max(1, min(width, height))))
+    /// Taille cible : inscrite dans maxLong×maxShort, dimensions paires, jamais d'agrandissement.
+    static func targetSize(width: Int, height: Int, maxLong: Int, maxShort: Int) -> (Int, Int) {
+        let long = Double(max(1, max(width, height))), short = Double(max(1, min(width, height)))
+        let scale = min(1.0, Double(maxLong) / long, Double(maxShort) / short)
         let w = Int((Double(width) * scale).rounded()) & ~1
         let h = Int((Double(height) * scale).rounded()) & ~1
         return (max(2, w), max(2, h))
