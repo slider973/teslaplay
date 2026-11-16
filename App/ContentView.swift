@@ -7,6 +7,9 @@ struct ContentView: View {
     @State private var shared: [String: Any] = [:]
     @State private var health = "—"
     @StateObject private var localNetwork = LocalNetworkPermission()
+    @StateObject private var testServer = TestServer()
+    @StateObject private var scanner = NetworkScanner()
+    @State private var sharedFileExists = false
     @Environment(\.scenePhase) private var scenePhase
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
@@ -29,6 +32,8 @@ struct ContentView: View {
 
                 statusCard
                 diagnosticCard
+                devicesCard
+                testServerCard
 
                 Label(status == nil ? "Démarrer la diffusion" : "Arrêter / gérer la diffusion",
                       systemImage: "record.circle")
@@ -86,7 +91,7 @@ struct ContentView: View {
         .onReceive(timer) { _ in refresh() }
         .onChange(of: scenePhase) { _, phase in if phase == .active { refresh() } }
         .onAppear {
-            refresh(); localNetwork.request()
+            refresh(); localNetwork.request(); scanner.scan()
             // Évite le verrouillage auto tant que l'app est au premier plan (le relais vit dans la diffusion).
             UIApplication.shared.isIdleTimerDisabled = true
         }
@@ -111,7 +116,9 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Diagnostic").font(.headline)
             row("Réseau local", localNetworkText, color: localNetworkColor)
-            row("Diffusion (extension)", shared["broadcast"] as? String ?? "jamais lancée")
+            row("Diffusion (extension)", sharedFileExists ? (shared["broadcast"] as? String ?? "—")
+                : "aucun état écrit : l'extension n'a jamais démarré avec cette version",
+                color: sharedFileExists ? .secondary : .orange)
             row("Serveur :\(shared["port"] as? Int ?? 8080)", shared["listener"] as? String ?? "—",
                 color: (shared["listener"] as? String) == "ready" ? .green : .orange)
             row("Images reçues", "\(shared["frames"] as? Int ?? 0) · dernière MAJ \(ageText)")
@@ -123,6 +130,57 @@ struct ContentView: View {
             }
             Button("Redemander l'accès réseau local") { localNetwork.request() }
                 .font(.footnote)
+        }
+        .font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
+        .padding().background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var devicesCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Appareils sur le partage").font(.headline)
+                Spacer()
+                if scanner.scanning { ProgressView() } else { Button("Scanner") { scanner.scan() } }
+            }
+            Text(scanner.subnetText).foregroundStyle(.secondary)
+            if scanner.devices.isEmpty {
+                Text(scanner.lastScan == nil ? "Touchez Scanner." : "Aucun appareil n'a répondu.")
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(scanner.devices) { d in
+                HStack {
+                    Text(d.ip).font(.system(.body, design: .monospaced)).textSelection(.enabled)
+                    Spacer()
+                    Text(d.via.sorted().joined(separator: ", ")).foregroundStyle(.secondary)
+                }
+            }
+            Text("iOS ne publie pas les baux DHCP : chaque adresse du sous-réseau est sondée (ping + TCP). Un appareil qui ignore tout (pare-feu) peut ne pas apparaître ; il apparaîtra dans « Serveur test » dès qu'il s'y connecte.")
+                .font(.caption2).foregroundStyle(.secondary)
+        }
+        .font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
+        .padding().background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var testServerCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Serveur test (app)").font(.headline)
+                Spacer()
+                Button(testServer.running ? "Arrêter" : "Démarrer") {
+                    testServer.running ? testServer.stop() : testServer.start()
+                }
+                .buttonStyle(.borderedProminent).tint(testServer.running ? .gray : .blue)
+            }
+            row("Listener :8080", testServer.state,
+                color: testServer.state.hasPrefix("ready") ? .green : (testServer.state.hasPrefix("failed") ? .red : .secondary))
+            Text("Arrêtez la diffusion, démarrez ce serveur, gardez l'app ouverte, puis ouvrez http://172.20.10.1:8080 dans la Tesla. « TeslaMirror OK » = réseau bon, le problème vient de l'extension.")
+                .font(.caption2).foregroundStyle(.secondary)
+            ForEach(testServer.clients) { c in
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(c.address).font(.system(.footnote, design: .monospaced)).textSelection(.enabled)
+                    Text("\(c.date.formatted(date: .omitted, time: .standard)) · \(c.request)").foregroundStyle(.secondary)
+                }
+            }
         }
         .font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
         .padding().background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -172,6 +230,7 @@ struct ContentView: View {
     }
 
     private func refresh() {
+        sharedFileExists = SharedStatus.fileURL.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
         if let url = SharedStatus.fileURL, let data = try? Data(contentsOf: url),
            let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             shared = obj
