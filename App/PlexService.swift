@@ -1,12 +1,13 @@
 import Foundation
+import Observation
 import Security
 import UIKit
 
 /// Connexion Plex depuis l'iPhone : code PIN plex.tv, choix du serveur, test des connexions.
 /// Le résultat (adresse + jeton d'accès du serveur) est écrit dans l'App Group (`plex.json`)
 /// pour l'extension. Le jeton n'est jamais envoyé au navigateur de la voiture.
-@MainActor
-final class PlexService: ObservableObject {
+@MainActor @Observable
+final class PlexService {
     struct Server: Identifiable, Hashable {
         let id: String
         let name: String
@@ -24,10 +25,10 @@ final class PlexService: ObservableObject {
         case error(String)
     }
 
-    @Published var state: State = .idle
+    var state: State = .idle
 
-    private let product = "TeslaMirror"
-    private var pollTask: Task<Void, Never>?
+    @ObservationIgnored private let product = "TeslaMirror"
+    @ObservationIgnored private var pollTask: Task<Void, Never>?
 
     var clientId: String {
         if let id = UserDefaults.standard.string(forKey: "plex.clientId") { return id }

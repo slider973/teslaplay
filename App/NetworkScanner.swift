@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import Darwin
+import Observation
 
 /// Liste les appareils connectés au partage de connexion de l'iPhone.
 ///
@@ -9,24 +10,25 @@ import Darwin
 /// + tentative TCP sur quelques ports. Toute réponse — même un refus de connexion — prouve
 /// qu'un appareil est présent. Sonder le réseau local déclenche aussi la demande
 /// d'autorisation « Réseau local » d'iOS.
-final class NetworkScanner: ObservableObject {
-    struct Device: Identifiable, Hashable {
+@MainActor @Observable
+final class NetworkScanner {
+    struct Device: Identifiable, Hashable, Sendable {
         var id: String { ip }
         let ip: String
         var via: Set<String>
     }
 
-    @Published private(set) var devices: [Device] = []
-    @Published private(set) var scanning = false
-    @Published private(set) var subnetText = "—"
-    @Published private(set) var lastScan: Date?
+    private(set) var devices: [Device] = []
+    private(set) var scanning = false
+    private(set) var subnetText = "—"
+    private(set) var lastScan: Date?
 
-    private static let probePorts: [UInt16] = [80, 443, 8080, 62078, 7000, 22]
+    nonisolated private static let probePorts: [UInt16] = [80, 443, 8080, 62078, 7000, 22]
 
     struct Subnet { let own: UInt32; let mask: UInt32; let interface: String }
 
     /// Interface du partage de connexion (bridgeXXX), ou à défaut le Wi-Fi (en0).
-    static func currentSubnet() -> Subnet? {
+    nonisolated static func currentSubnet() -> Subnet? {
         var ifaddr: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return nil }
         defer { freeifaddrs(ifaddr) }
@@ -44,7 +46,7 @@ final class NetworkScanner: ObservableObject {
         return bridge ?? wifi
     }
 
-    static func string(_ ip: UInt32) -> String {
+    nonisolated static func string(_ ip: UInt32) -> String {
         "\(ip >> 24 & 0xFF).\(ip >> 16 & 0xFF).\(ip >> 8 & 0xFF).\(ip & 0xFF)"
     }
 
@@ -65,18 +67,16 @@ final class NetworkScanner: ObservableObject {
         scanning = true
 
         let ips = hosts.map(Self.string)
-        DispatchQueue.global(qos: .userInitiated).async {
-            let list = Self.probe(ips)
-            DispatchQueue.main.async {
-                self.devices = list
-                self.scanning = false
-                self.lastScan = Date()
-            }
+        Task {
+            let list = await Task.detached(priority: .userInitiated) { Self.probe(ips) }.value
+            devices = list
+            scanning = false
+            lastScan = Date()
         }
     }
 
     /// Sonde une liste d'adresses (bloquant, ~3 s). Exposé pour les tests.
-    static func probe(_ ips: [String]) -> [Device] {
+    nonisolated static func probe(_ ips: [String]) -> [Device] {
         var found: [String: Set<String>] = [:]
         let lock = NSLock()
         func mark(_ ip: String, _ how: String) { lock.lock(); found[ip, default: []].insert(how); lock.unlock() }
@@ -100,7 +100,7 @@ final class NetworkScanner: ObservableObject {
     }
 
     /// Connexion TCP : établie ou refusée (RST) ⇒ l'appareil existe. Délai dépassé ⇒ inconnu.
-    private static func tcpProbe(ip: String, port: UInt16, queue: DispatchQueue, done: @escaping (Bool) -> Void) {
+    nonisolated private static func tcpProbe(ip: String, port: UInt16, queue: DispatchQueue, done: @escaping (Bool) -> Void) {
         let conn = NWConnection(host: NWEndpoint.Host(ip), port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
         var finished = false
         let lock = NSLock()
@@ -124,7 +124,7 @@ final class NetworkScanner: ObservableObject {
     }
 
     /// Ping ICMP via socket datagramme (autorisée sans privilèges sur iOS).
-    private static func ping(_ ips: [String]) -> Set<String> {
+    nonisolated private static func ping(_ ips: [String]) -> Set<String> {
         let sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)
         guard sock >= 0 else { return [] }
         defer { close(sock) }
@@ -168,7 +168,7 @@ final class NetworkScanner: ObservableObject {
         return alive
     }
 
-    private static func checksum(_ data: [UInt8]) -> UInt16 {
+    nonisolated private static func checksum(_ data: [UInt8]) -> UInt16 {
         var sum: UInt32 = 0
         var i = 0
         while i + 1 < data.count { sum += UInt32(data[i]) << 8 | UInt32(data[i + 1]); i += 2 }

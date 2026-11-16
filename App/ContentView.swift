@@ -4,8 +4,8 @@ import SwiftUI
 /// l'outillage technique (Diagnostic), pour garder l'écran principal simple.
 struct ContentView: View {
     @State private var model = MirrorStatusModel()
-    @StateObject private var tunnel = TunnelController()
-    @StateObject private var localNetwork = LocalNetworkPermission()
+    @State private var tunnel = TunnelController()
+    @State private var localNetwork = LocalNetworkPermission()
     /// Onglet mémorisé par scène (fenêtre).
     @SceneStorage("tab") private var tab = 0
 
@@ -23,8 +23,8 @@ struct ContentView: View {
         }
         .tint(Theme.accent)
         .environment(model)
-        .environmentObject(tunnel)
-        .environmentObject(localNetwork)
+        .environment(tunnel)
+        .environment(localNetwork)
         .task { await model.poll() }
         .onAppear {
             localNetwork.request()

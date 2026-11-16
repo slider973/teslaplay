@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PlexSettingsView: View {
-    @StateObject private var plex = PlexService()
+    @State private var plex = PlexService()
 
     var body: some View {
         Form {

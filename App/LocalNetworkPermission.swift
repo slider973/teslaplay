@@ -1,20 +1,22 @@
 import Foundation
 import Network
 import dnssd
+import Observation
 
 /// Déclenche la demande d'autorisation « Réseau local » depuis l'app (iOS ne la propose
 /// qu'à une app qui publie ou cherche un service Bonjour déclaré dans NSBonjourServices),
 /// puis détermine si elle est accordée : le navigateur Bonjour retrouve notre propre service
 /// si l'accès est autorisé, ou passe en `.waiting(PolicyDenied)` s'il est refusé.
-final class LocalNetworkPermission: ObservableObject {
+@MainActor @Observable
+final class LocalNetworkPermission {
     enum State: Equatable { case unknown, checking, granted, denied }
 
     static let serviceType = "_teslamirror._tcp"
 
-    @Published private(set) var state: State = .unknown
-    private var listener: NWListener?
-    private var browser: NWBrowser?
-    private let serviceName = "TeslaMirror-" + UUID().uuidString.prefix(8)
+    private(set) var state: State = .unknown
+    @ObservationIgnored private var listener: NWListener?
+    @ObservationIgnored private var browser: NWBrowser?
+    @ObservationIgnored private let serviceName = "TeslaMirror-" + UUID().uuidString.prefix(8)
 
     func request() {
         guard state != .checking else { return }
@@ -29,7 +31,8 @@ final class LocalNetworkPermission: ObservableObject {
             listener.service = NWListener.Service(name: serviceName, type: Self.serviceType)
             listener.newConnectionHandler = { $0.cancel() }
             listener.stateUpdateHandler = { [weak self] state in
-                if case .failed = state { self?.finish(.denied) }
+                // Démarré sur la file principale : on est déjà sur le MainActor.
+                MainActor.assumeIsolated { if case .failed = state { self?.finish(.denied) } }
             }
             listener.start(queue: .main)
             self.listener = listener
@@ -39,18 +42,22 @@ final class LocalNetworkPermission: ObservableObject {
 
         let browser = NWBrowser(for: .bonjour(type: Self.serviceType, domain: nil), using: params)
         browser.stateUpdateHandler = { [weak self] state in
-            if case .waiting(let error) = state, case .dns(let code) = error,
-               code == DNSServiceErrorType(kDNSServiceErr_PolicyDenied) {
-                self?.finish(.denied)
+            MainActor.assumeIsolated {
+                if case .waiting(let error) = state, case .dns(let code) = error,
+                   code == DNSServiceErrorType(kDNSServiceErr_PolicyDenied) {
+                    self?.finish(.denied)
+                }
             }
         }
         browser.browseResultsChangedHandler = { [weak self] results, _ in
-            guard let self else { return }
-            let found = results.contains { result in
-                if case .service(let name, _, _, _) = result.endpoint { return name == self.serviceName }
-                return false
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                let found = results.contains { result in
+                    if case .service(let name, _, _, _) = result.endpoint { return name == self.serviceName }
+                    return false
+                }
+                if found { self.finish(.granted) }
             }
-            if found { self.finish(.granted) }
         }
         browser.start(queue: .main)
         self.browser = browser

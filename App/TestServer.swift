@@ -1,11 +1,13 @@
 import Foundation
 import Network
+import Observation
 
 /// Serveur de test hébergé par l'APP (pas l'extension), pour isoler les problèmes réseau :
 /// si la Tesla atteint ce serveur, le réseau est bon et le problème vient de l'extension.
 /// L'app doit rester au premier plan pendant le test (iOS suspend l'app en arrière-plan).
-final class TestServer: ObservableObject {
-    struct Client: Identifiable {
+@MainActor @Observable
+final class TestServer {
+    struct Client: Identifiable, Sendable {
         let id = UUID()
         let port: UInt16
         let address: String
@@ -13,15 +15,14 @@ final class TestServer: ObservableObject {
         let date: Date
     }
 
-    @Published private(set) var states: [UInt16: String] = [:]
-    var state: String { states.sorted { $0.key < $1.key }.map { ":\($0.key) \($0.value)" }.joined(separator: "\n").ifEmpty("arrêté") }
-    @Published private(set) var running = false
-    @Published private(set) var clients: [Client] = []
+    private(set) var states: [UInt16: String] = [:]
+    private(set) var running = false
+    private(set) var clients: [Client] = []
 
     /// Plusieurs ports à la fois : le pare-feu de la voiture peut n'autoriser que 80/443.
     let ports: [UInt16] = [80, 443, 8080, 8000]
-    private var listeners: [NWListener] = []
-    private let queue = DispatchQueue(label: "teslamirror.testserver")
+    @ObservationIgnored private var listeners: [NWListener] = []
+    @ObservationIgnored nonisolated private let queue = DispatchQueue(label: "teslamirror.testserver")
 
     func start() {
         stop()
@@ -49,7 +50,7 @@ final class TestServer: ObservableObject {
                 case .cancelled: text = "arrêté"
                 @unknown default: text = "inconnu"
                 }
-                DispatchQueue.main.async { self?.states[port] = text }
+                Task { @MainActor in self?.states[port] = text }
             }
             listener.newConnectionHandler = { [weak self] conn in self?.handle(conn, port: port) }
             listener.start(queue: queue)
@@ -67,7 +68,7 @@ final class TestServer: ObservableObject {
         running = false
     }
 
-    private func handle(_ conn: NWConnection, port: UInt16) {
+    nonisolated private func handle(_ conn: NWConnection, port: UInt16) {
         conn.start(queue: queue)
         let address: String
         if case .hostPort(let host, let port) = conn.endpoint { address = "\(host):\(port)" } else { address = "\(conn.endpoint)" }
@@ -76,9 +77,11 @@ final class TestServer: ObservableObject {
             let head = data.map { String(decoding: $0, as: UTF8.self) } ?? ""
             let line = head.components(separatedBy: "\r\n").first ?? ""
             let path = line.split(separator: " ").dropFirst().first.map(String.init) ?? "/"
-            DispatchQueue.main.async {
-                self?.clients.insert(Client(port: port, address: address, request: line.isEmpty ? "(connexion sans requête)" : line, date: Date()), at: 0)
-                if (self?.clients.count ?? 0) > 30 { self?.clients.removeLast() }
+            let client = Client(port: port, address: address, request: line.isEmpty ? "(connexion sans requête)" : line, date: Date())
+            Task { @MainActor in
+                guard let self else { return }
+                self.clients.insert(client, at: 0)
+                if self.clients.count > 30 { self.clients.removeLast() }
             }
             let body: String
             let type: String
@@ -102,8 +105,4 @@ final class TestServer: ObservableObject {
             conn.send(content: Data(header.utf8) + payload, completion: .contentProcessed { _ in conn.cancel() })
         }
     }
-}
-
-private extension String {
-    func ifEmpty(_ fallback: String) -> String { isEmpty ? fallback : self }
 }

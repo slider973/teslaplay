@@ -4,7 +4,7 @@ import SwiftUI
 /// liste de vérification. Une seule action principale, en rouge.
 struct MirrorHomeView: View {
     @Environment(MirrorStatusModel.self) private var model
-    @EnvironmentObject private var tunnel: TunnelController
+    @Environment(TunnelController.self) private var tunnel
     @AppStorage("mirrorQuality", store: UserDefaults(suiteName: SharedStatus.appGroupID)) private var quality = "haute"
     @State private var copied = false
 

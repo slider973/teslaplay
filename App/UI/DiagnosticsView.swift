@@ -4,10 +4,10 @@ import SwiftUI
 /// du partage, serveur de test.
 struct DiagnosticsView: View {
     @Environment(MirrorStatusModel.self) private var model
-    @EnvironmentObject private var tunnel: TunnelController
-    @EnvironmentObject private var localNetwork: LocalNetworkPermission
-    @StateObject private var scanner = NetworkScanner()
-    @StateObject private var testServer = TestServer()
+    @Environment(TunnelController.self) private var tunnel
+    @Environment(LocalNetworkPermission.self) private var localNetwork
+    @State private var scanner = NetworkScanner()
+    @State private var testServer = TestServer()
 
     var body: some View {
         @Bindable var model = model

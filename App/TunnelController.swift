@@ -1,14 +1,15 @@
 import Foundation
 import NetworkExtension
+import Observation
 
 /// Active / désactive le tunnel « adresse virtuelle » (extension TeslaMirrorTunnel).
-@MainActor
-final class TunnelController: ObservableObject {
-    @Published private(set) var status: NEVPNStatus = .invalid
-    @Published private(set) var error: String?
-    @Published private(set) var info: [String: Any] = [:]
-    private var manager: NETunnelProviderManager?
-    private var observer: NSObjectProtocol?
+@MainActor @Observable
+final class TunnelController {
+    private(set) var status: NEVPNStatus = .invalid
+    private(set) var error: String?
+    private(set) var info: [String: Any] = [:]
+    @ObservationIgnored private var manager: NETunnelProviderManager?
+    @ObservationIgnored private var observer: NSObjectProtocol?
 
     static var providerBundleID: String { (Bundle.main.bundleIdentifier ?? "") + ".Tunnel" }
 
