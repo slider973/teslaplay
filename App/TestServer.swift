@@ -7,21 +7,29 @@ import Network
 final class TestServer: ObservableObject {
     struct Client: Identifiable {
         let id = UUID()
+        let port: UInt16
         let address: String
         let request: String
         let date: Date
     }
 
-    @Published private(set) var state = "arrêté"
+    @Published private(set) var states: [UInt16: String] = [:]
+    var state: String { states.sorted { $0.key < $1.key }.map { ":\($0.key) \($0.value)" }.joined(separator: "\n").ifEmpty("arrêté") }
     @Published private(set) var running = false
     @Published private(set) var clients: [Client] = []
 
-    let port: UInt16 = 8080
-    private var listener: NWListener?
+    /// Plusieurs ports à la fois : le pare-feu de la voiture peut n'autoriser que 80/443.
+    let ports: [UInt16] = [80, 443, 8080, 8000]
+    private var listeners: [NWListener] = []
     private let queue = DispatchQueue(label: "teslamirror.testserver")
 
     func start() {
         stop()
+        running = true
+        for port in ports { listen(on: port) }
+    }
+
+    private func listen(on port: UInt16) {
         do {
             let params = NWParameters.tcp
             params.allowLocalEndpointReuse = true
@@ -30,39 +38,36 @@ final class TestServer: ObservableObject {
                 let text: String
                 switch st {
                 case .setup: text = "setup"
-                case .ready: text = "ready (port \(self?.port ?? 0))"
+                case .ready: text = "ready"
                 case .waiting(let e): text = "waiting(\(e))"
                 case .failed(let e):
                     if case .posix(let code) = e, code == .EADDRINUSE {
-                        text = "failed(port 8080 déjà utilisé — l'extension de diffusion écoute déjà : arrêtez la diffusion pour ce test)"
+                        text = "failed(port déjà utilisé — arrêtez la diffusion)"
                     } else {
                         text = "failed(\(e))"
                     }
                 case .cancelled: text = "arrêté"
                 @unknown default: text = "inconnu"
                 }
-                DispatchQueue.main.async {
-                    self?.state = text
-                    if case .failed = st { self?.running = false }
-                }
+                DispatchQueue.main.async { self?.states[port] = text }
             }
-            listener.newConnectionHandler = { [weak self] conn in self?.handle(conn) }
+            listener.newConnectionHandler = { [weak self] conn in self?.handle(conn, port: port) }
             listener.start(queue: queue)
-            self.listener = listener
-            running = true
-            state = "démarrage…"
+            listeners.append(listener)
+            states[port] = "démarrage…"
         } catch {
-            state = "failed(\(error))"
+            states[port] = "failed(\(error))"
         }
     }
 
     func stop() {
-        listener?.cancel()
-        listener = nil
+        listeners.forEach { $0.cancel() }
+        listeners.removeAll()
+        states.removeAll()
         running = false
     }
 
-    private func handle(_ conn: NWConnection) {
+    private func handle(_ conn: NWConnection, port: UInt16) {
         conn.start(queue: queue)
         let address: String
         if case .hostPort(let host, let port) = conn.endpoint { address = "\(host):\(port)" } else { address = "\(conn.endpoint)" }
@@ -72,7 +77,7 @@ final class TestServer: ObservableObject {
             let line = head.components(separatedBy: "\r\n").first ?? ""
             let path = line.split(separator: " ").dropFirst().first.map(String.init) ?? "/"
             DispatchQueue.main.async {
-                self?.clients.insert(Client(address: address, request: line.isEmpty ? "(connexion sans requête)" : line, date: Date()), at: 0)
+                self?.clients.insert(Client(port: port, address: address, request: line.isEmpty ? "(connexion sans requête)" : line, date: Date()), at: 0)
                 if (self?.clients.count ?? 0) > 30 { self?.clients.removeLast() }
             }
             let body: String
@@ -87,6 +92,7 @@ final class TestServer: ObservableObject {
                 <body style="background:#111;color:#fff;font-family:sans-serif;text-align:center;padding-top:15vh">
                 <h1 style="font-size:64px;color:#4caf50">TeslaMirror OK</h1>
                 <p style="font-size:24px">Le navigateur atteint bien l'iPhone (serveur de test de l'app).</p>
+                <p style="font-size:28px">Port <b>\(port)</b> : ouvert depuis ce navigateur.</p>
                 <p style="font-size:20px;color:#aaa">Votre adresse : \(address)</p>
                 </body></html>
                 """
@@ -96,4 +102,8 @@ final class TestServer: ObservableObject {
             conn.send(content: Data(header.utf8) + payload, completion: .contentProcessed { _ in conn.cancel() })
         }
     }
+}
+
+private extension String {
+    func ifEmpty(_ fallback: String) -> String { isEmpty ? fallback : self }
 }

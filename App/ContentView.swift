@@ -171,13 +171,15 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderedProminent).tint(testServer.running ? .gray : .blue)
             }
-            row("Listener :8080", testServer.state,
-                color: testServer.state.hasPrefix("ready") ? .green : (testServer.state.hasPrefix("failed") ? .red : .secondary))
-            Text("Arrêtez la diffusion, démarrez ce serveur, gardez l'app ouverte, puis ouvrez http://172.20.10.1:8080 dans la Tesla. « TeslaMirror OK » = réseau bon, le problème vient de l'extension.")
+            ForEach(testServer.ports, id: \.self) { port in
+                let st = testServer.states[port] ?? "arrêté"
+                row("Port \(port)", st, color: st == "ready" ? .green : (st.hasPrefix("failed") ? .red : .secondary))
+            }
+            Text("Arrêtez la diffusion, démarrez ce serveur, gardez l'app ouverte. Dans la Tesla, essayez http://172.20.10.1 (port 80), puis :8080, :8000, puis http://172-20-10-1.sslip.io. Chaque visite reçue s'affiche ci-dessous avec son port.")
                 .font(.caption2).foregroundStyle(.secondary)
             ForEach(testServer.clients) { c in
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(c.address).font(.system(.footnote, design: .monospaced)).textSelection(.enabled)
+                    Text("\(c.address) → port \(c.port)").font(.system(.footnote, design: .monospaced)).textSelection(.enabled)
                     Text("\(c.date.formatted(date: .omitted, time: .standard)) · \(c.request)").foregroundStyle(.secondary)
                 }
             }
