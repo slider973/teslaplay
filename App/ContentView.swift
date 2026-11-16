@@ -2,13 +2,14 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var addresses = NetworkInfo.addresses()
-    @State private var selectedIP = NetworkInfo.hotspotIP
+    @State private var selectedIP = NetworkInfo.teslaIP
     @State private var status: ServerStatus?
     @State private var shared: [String: Any] = [:]
     @State private var health = "—"
     @StateObject private var localNetwork = LocalNetworkPermission()
     @StateObject private var testServer = TestServer()
     @StateObject private var scanner = NetworkScanner()
+    @StateObject private var tunnel = TunnelController()
     @State private var sharedFileExists = false
     @Environment(\.scenePhase) private var scenePhase
     private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
@@ -32,6 +33,7 @@ struct ContentView: View {
 
                 statusCard
                 diagnosticCard
+                tunnelCard
                 devicesCard
                 testServerCard
 
@@ -80,7 +82,7 @@ struct ContentView: View {
                     Text("Mode d'emploi").font(.headline)
                     Text("1. Activez le Partage de connexion et connectez la Tesla au Wi-Fi de l'iPhone.")
                     Text("2. Touchez « Démarrer la diffusion » puis choisissez TeslaMirror.")
-                    Text("3. Dans le navigateur de la Tesla, ouvrez \(selected.url).")
+                    Text("3. Activez « Accès Tesla », puis ouvrez \(selected.url) dans le navigateur de la Tesla.")
                     Text("⚠️ Usage à l'arrêt uniquement. Aucun contrôle tactile depuis la voiture.")
                         .foregroundStyle(.orange)
                 }
@@ -135,6 +137,31 @@ struct ContentView: View {
         .padding().background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
+    private var tunnelCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Accès Tesla (adresse virtuelle)").font(.headline)
+                Spacer()
+                Button(tunnel.status == .connected ? "Désactiver" : "Activer") {
+                    if tunnel.status == .connected { tunnel.stop() } else { Task { await tunnel.start() } }
+                }
+                .buttonStyle(.borderedProminent).tint(tunnel.status == .connected ? .gray : .green)
+            }
+            row("Tunnel", tunnel.statusText, color: tunnel.status == .connected ? .green : .secondary)
+            if let packets = tunnel.info["packets"] as? Int {
+                row("Paquets reçus par le tunnel", "\(packets)")
+            }
+            if let dests = tunnel.info["destinations"] as? [String], !dests.isEmpty {
+                row("Destinations", dests.joined(separator: ", "))
+            }
+            if let error = tunnel.error { Text(error).foregroundStyle(.red) }
+            Text("Le navigateur Tesla refuse les adresses privées comme 172.20.10.1. Ce tunnel local (aucune donnée ne passe par lui ni ne sort) donne à l'iPhone les adresses 100.99.9.9 (Tesla) et 198.18.9.9 (secours). Il reste actif en permanence ; dans la Tesla : http://100.99.9.9:8080")
+                .font(.caption2).foregroundStyle(.secondary)
+        }
+        .font(.footnote).frame(maxWidth: .infinity, alignment: .leading)
+        .padding().background(.thinMaterial).clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
     private var devicesCard: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
@@ -175,7 +202,7 @@ struct ContentView: View {
                 let st = testServer.states[port] ?? "arrêté"
                 row("Port \(port)", st, color: st == "ready" ? .green : (st.hasPrefix("failed") ? .red : .secondary))
             }
-            Text("Arrêtez la diffusion, démarrez ce serveur, gardez l'app ouverte. Dans la Tesla, essayez http://172.20.10.1 (port 80), puis :8080, :8000, puis http://172-20-10-1.sslip.io. Chaque visite reçue s'affiche ci-dessous avec son port.")
+            Text("Arrêtez la diffusion, démarrez ce serveur, gardez l'app ouverte. Dans la Tesla : http://100.99.9.9:8080 (accès Tesla activé). Chaque visite reçue s'affiche ci-dessous avec son port.")
                 .font(.caption2).foregroundStyle(.secondary)
             ForEach(testServer.clients) { c in
                 VStack(alignment: .leading, spacing: 1) {
@@ -232,6 +259,7 @@ struct ContentView: View {
     }
 
     private func refresh() {
+        tunnel.refreshInfo()
         sharedFileExists = SharedStatus.fileURL.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
         if let url = SharedStatus.fileURL, let data = try? Data(contentsOf: url),
            let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {

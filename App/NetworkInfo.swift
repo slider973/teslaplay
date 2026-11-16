@@ -11,11 +11,17 @@ struct MirrorAddress: Identifiable, Hashable {
 
 enum NetworkInfo {
     static let hotspotIP = "172.20.10.1"
+    /// Adresse virtuelle portée par le tunnel TeslaMirror : la seule que le navigateur Tesla accepte
+    /// (il refuse les IP privées comme 172.20.10.1).
+    static let teslaIP = "100.99.9.9"
+    static let teslaBackupIP = "198.18.9.9"
 
     /// Adresses utilisables : partage de connexion (toujours proposé) + IPv4 détectées.
     static func addresses() -> [MirrorAddress] {
-        var result = [MirrorAddress(label: "Partage de connexion", ip: hotspotIP)]
-        for (name, ip) in interfaceIPv4s() where ip != hotspotIP {
+        var result = [MirrorAddress(label: "Tesla (tunnel)", ip: teslaIP),
+                      MirrorAddress(label: "Tesla (secours)", ip: teslaBackupIP),
+                      MirrorAddress(label: "Partage de connexion", ip: hotspotIP)]
+        for (name, ip) in interfaceIPv4s() where ip != hotspotIP && ip != teslaIP && ip != teslaBackupIP {
             let label: String
             switch name {
             case "en0": label = "Wi-Fi"

@@ -31,8 +31,11 @@ targets:
       path: App/TeslaMirror.entitlements
       properties:
         com.apple.security.application-groups: [group.$(BUNDLE_ID_PREFIX).TeslaMirror]
+        com.apple.developer.networking.networkextension: [packet-tunnel-provider]
     dependencies:
       - target: TeslaMirrorBroadcast
+        embed: true
+      - target: TeslaMirrorTunnel
         embed: true
     settings:
       base:
@@ -79,3 +82,25 @@ targets:
           NSExtensionPointIdentifier: com.apple.broadcast-services-upload
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
           RPBroadcastProcessMode: RPBroadcastProcessModeSampleBuffer
+
+  # Tunnel « adresse virtuelle » : le navigateur Tesla refuse les IP privées (172.20.10.1).
+  TeslaMirrorTunnel:
+    type: app-extension
+    platform: iOS
+    sources: [Tunnel]
+    entitlements:
+      path: Tunnel/TeslaMirrorTunnel.entitlements
+      properties:
+        com.apple.security.application-groups: [group.$(BUNDLE_ID_PREFIX).TeslaMirror]
+        com.apple.developer.networking.networkextension: [packet-tunnel-provider]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).TeslaMirror.Tunnel
+        SKIP_INSTALL: YES
+    info:
+      path: Tunnel/Info.plist
+      properties:
+        CFBundleDisplayName: TeslaMirror Tunnel
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.networkextension.packet-tunnel
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PacketTunnelProvider

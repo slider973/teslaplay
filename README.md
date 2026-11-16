@@ -1,7 +1,9 @@
 # TeslaMirror
 
 TeslaMirror recopie l'écran d'un iPhone dans le navigateur d'une Tesla, en passant par le partage de connexion de l'iPhone.
-L'iPhone héberge un petit serveur web. La Tesla, connectée au Wi‑Fi de l'iPhone, ouvre **http://172.20.10.1:8080**.
+L'iPhone héberge un petit serveur web. La Tesla, connectée au Wi‑Fi de l'iPhone, ouvre **http://100.99.9.9:8080**.
+
+> **Pourquoi 100.99.9.9 et pas 172.20.10.1 ?** Le navigateur Tesla refuse les adresses privées (RFC 1918), dont 172.20.10.1, l'adresse de l'iPhone sur le partage de connexion (ERR_CONNECTION_REFUSED). TeslaMirror installe donc un petit tunnel local (extension *Packet Tunnel*, affichée comme VPN) qui donne à l'iPhone les adresses supplémentaires `100.99.9.9` (validée dans la Tesla) et `198.18.9.9` (secours), hors RFC 1918. Aucune route n'est ajoutée : le trafic de l'iPhone ne passe pas par ce tunnel et rien ne sort.
 
 > ⚠️ **Usage à l'arrêt uniquement.** Il n'y a aucun contrôle tactile depuis la voiture, car iOS ne permet pas d'injecter des touches.
 
@@ -35,7 +37,7 @@ Le dossier `Core/` est compilé dans l'extension. Il n'utilise ni ReplayKit ni U
 | `/health` | répond `ok` |
 | `/status` | JSON : rotation, nombre de clients, codec, résolution |
 
-WebCodecs n'est pas utilisé : il exige un contexte sécurisé (HTTPS ou localhost), ce que `http://172.20.10.1` n'est pas. MSE n'a pas cette contrainte.
+WebCodecs n'est pas utilisé : il exige un contexte sécurisé (HTTPS ou localhost), ce que `http://100.99.9.9` n'est pas. MSE n'a pas cette contrainte.
 
 ### Contraintes mémoire (~50 Mo pour l'extension)
 
@@ -89,8 +91,8 @@ Safari macOS a été testé avec le harnais : il lit le flux H.264. Sur iPhone o
 
 1. Sur l'iPhone, activez *Réglages → Partage de connexion → Autoriser d'autres utilisateurs*. Activer *Maximiser la compatibilité* peut aider.
 2. Sur la Tesla, connectez-vous au Wi‑Fi de l'iPhone (*Contrôles → Wi‑Fi*).
-3. Lancez la diffusion depuis TeslaMirror. L'URL par défaut est `http://172.20.10.1:8080`.
-4. Ouvrez le navigateur de la Tesla et tapez `http://172.20.10.1:8080`. Le bouton *Plein écran* et le bouton ↻ apparaissent quand on touche l'écran.
+3. Dans TeslaMirror, touchez **Accès Tesla › Activer** (une seule fois : iOS demande d'autoriser la configuration VPN ; le tunnel reste ensuite actif, relancé automatiquement). Votre VPN habituel doit être coupé : iOS n'en active qu'un.
+4. Lancez la diffusion depuis TeslaMirror, puis ouvrez dans la Tesla `http://100.99.9.9:8080`. Le bouton *Plein écran* et le bouton ↻ apparaissent quand on touche l'écran.
 
 ### Dépannage
 
@@ -128,7 +130,7 @@ Les apps CarPlay comme CarTV n'ont pas ce problème, car elles ne recopient pas 
 
 ## Lecteur intégré : IPTV, Plex et Jellyfin
 
-Dans la voiture, ouvrez `http://172.20.10.1:8080` puis **TV**, **Plex** ou **Jellyfin**. Contrairement à la recopie, la vidéo n'est ni capturée ni réencodée sur l'iPhone : c'est **le navigateur de la Tesla qui décode le flux**, avec hls.js ou mpegts.js. L'image est donc nette et le son sort par les haut-parleurs. L'iPhone se contente de relayer les octets.
+Dans la voiture, ouvrez `http://100.99.9.9:8080` puis **TV**, **Plex** ou **Jellyfin**. Contrairement à la recopie, la vidéo n'est ni capturée ni réencodée sur l'iPhone : c'est **le navigateur de la Tesla qui décode le flux**, avec hls.js ou mpegts.js. L'image est donc nette et le son sort par les haut-parleurs. L'iPhone se contente de relayer les octets.
 
 - **Configuration, dans l'app iPhone :**
   - *TV (IPTV)* : un lien M3U ou un compte Xtream Codes. La liste est téléchargée et analysée dans l'app, puis rangée dans l'App Group.

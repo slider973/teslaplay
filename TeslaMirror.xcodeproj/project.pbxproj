@@ -15,6 +15,7 @@
 		2D10633D034FB4A46245FF96 /* NetworkScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0523A5003A3F57261D3269F8 /* NetworkScanner.swift */; };
 		2D942BB52C80247BF4E221CC /* SampleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A537795603F9043B1B528F /* SampleHandler.swift */; };
 		35CBDC02B1EF5EEA238A3A1B /* MediaConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C916E455151BBE6C685A65B /* MediaConfig.swift */; };
+		36152A6B1AAF8728BEB3DA7F /* TunnelController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF9A881D5BE372B733B7EADC /* TunnelController.swift */; };
 		37AAFAD787DC0D5CB7D6FB00 /* TeslaMirrorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */; };
 		3955256390729DD3BDC716EF /* JellyfinSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60BE7A23C6611CF99E022360 /* JellyfinSettingsView.swift */; };
 		3ECD4E3A26C9E1345503D7CF /* SharedStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99EE4C920B49576DB1F98D0 /* SharedStatus.swift */; };
@@ -23,10 +24,12 @@
 		4D9ADE62B5444867A52D8902 /* M3UParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6504CE38F2CE2BE5D700AE9D /* M3UParser.swift */; };
 		4F2DA9958156D0AB952F11A1 /* TeslaMirrorBroadcast.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D634B6B58D5E09DF158E2A65 /* TeslaMirrorBroadcast.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		55B79058061353E6DB5ECC4F /* MediaConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C916E455151BBE6C685A65B /* MediaConfig.swift */; };
+		6D00DBCD97D0A33FB8A4854D /* TeslaMirrorTunnel.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DA015A1B5168DF9FDEBD63BC /* TeslaMirrorTunnel.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		72E773DE93DEFC0E3B9121E2 /* JellyfinAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A33CBB2CB3B70A39CD5492E /* JellyfinAuth.swift */; };
 		79E3ED29CC573609BD508328 /* LocalNetworkPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */; };
 		8527D1EEFC750FC4D0F13DB8 /* BroadcastPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B48B274ED4502E642F0AD06 /* BroadcastPicker.swift */; };
 		92691362BA911E208E3A176E /* MirrorPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C25B67E49C70AEAD86FE95 /* MirrorPipeline.swift */; };
+		9CC25D6F925C6085F28306D0 /* PacketTunnelProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B4E0A2BC34651A60C519074 /* PacketTunnelProvider.swift */; };
 		B43CD65B9558AE276624621B /* IPTVSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E903901274461CEA2D5DE6C1 /* IPTVSettingsView.swift */; };
 		C307DE8EA201AEED92536161 /* MirrorServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F2C2790D7A24DB3CB93184 /* MirrorServer.swift */; };
 		C916ED0B5BB6D40636068425 /* PlexSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F15A4F64A80A94476FDCB9 /* PlexSettingsView.swift */; };
@@ -39,6 +42,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		AD6AAA900C4CDF3BCA6865C8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 183EFEF1FAB50E5AFAE38B36 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F20267FB5F3BEA7695664BCC;
+			remoteInfo = TeslaMirrorTunnel;
+		};
 		B6B4B9127EB25C6EDA49C0F9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 183EFEF1FAB50E5AFAE38B36 /* Project object */;
@@ -56,6 +66,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				4F2DA9958156D0AB952F11A1 /* TeslaMirrorBroadcast.appex in Embed Foundation Extensions */,
+				6D00DBCD97D0A33FB8A4854D /* TeslaMirrorTunnel.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -68,6 +79,7 @@
 		1178A3A8019479E61B452A89 /* TeslaMirror.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TeslaMirror.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		17C25B67E49C70AEAD86FE95 /* MirrorPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorPipeline.swift; sourceTree = "<group>"; };
 		1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeslaMirrorApp.swift; sourceTree = "<group>"; };
+		2B4E0A2BC34651A60C519074 /* PacketTunnelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketTunnelProvider.swift; sourceTree = "<group>"; };
 		37A537795603F9043B1B528F /* SampleHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleHandler.swift; sourceTree = "<group>"; };
 		462911B144B89905C7022BA8 /* FMP4Muxer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FMP4Muxer.swift; sourceTree = "<group>"; };
 		4CDCB8ECEB86D5210918C69A /* Relay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Relay.swift; sourceTree = "<group>"; };
@@ -79,6 +91,7 @@
 		6B48B274ED4502E642F0AD06 /* BroadcastPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastPicker.swift; sourceTree = "<group>"; };
 		700673281523D940262ADF2E /* Web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Web; sourceTree = SOURCE_ROOT; };
 		77F2C2790D7A24DB3CB93184 /* MirrorServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorServer.swift; sourceTree = "<group>"; };
+		7C125862B181B4558B23FDDB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9262C95B6F7B04F86B1F7DD8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		93BBA4887D2CA6B7DBB34128 /* NetworkInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInfo.swift; sourceTree = "<group>"; };
 		9F21F3937A66F0D7904B1B3D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -87,11 +100,14 @@
 		C70156AF5D5B3B7010FF0FE4 /* PlexService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlexService.swift; sourceTree = "<group>"; };
 		CB32D61F9059CBD8AFEDFFC5 /* H264Encoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = H264Encoder.swift; sourceTree = "<group>"; };
 		CDFA150161F10AD0BE39DE9A /* TeslaMirror.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaMirror.entitlements; sourceTree = "<group>"; };
+		CF9A881D5BE372B733B7EADC /* TunnelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TunnelController.swift; sourceTree = "<group>"; };
 		D2A2B9CD069594AC0B870C2A /* WebPages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebPages.swift; sourceTree = "<group>"; };
 		D634B6B58D5E09DF158E2A65 /* TeslaMirrorBroadcast.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TeslaMirrorBroadcast.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		D6FE09040C9310258E483FF2 /* LocalNetworkPermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNetworkPermission.swift; sourceTree = "<group>"; };
+		DA015A1B5168DF9FDEBD63BC /* TeslaMirrorTunnel.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TeslaMirrorTunnel.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8F15A4F64A80A94476FDCB9 /* PlexSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlexSettingsView.swift; sourceTree = "<group>"; };
 		E903901274461CEA2D5DE6C1 /* IPTVSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPTVSettingsView.swift; sourceTree = "<group>"; };
+		EF33CCEDDA0CF15F63EC9A47 /* TeslaMirrorTunnel.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TeslaMirrorTunnel.entitlements; sourceTree = "<group>"; };
 		FFAD6C2D3021CDC1FEE018BF /* JPEGEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JPEGEncoder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -140,6 +156,7 @@
 				CDFA150161F10AD0BE39DE9A /* TeslaMirror.entitlements */,
 				1C7A6D0787A8855D76BF06DE /* TeslaMirrorApp.swift */,
 				54FE31A0049F8963CFFAC587 /* TestServer.swift */,
+				CF9A881D5BE372B733B7EADC /* TunnelController.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -151,8 +168,19 @@
 				3EB49FCC73F1DA5B74B8E7CB /* App */,
 				3A770B43FE4F3B450E5A1735 /* Broadcast */,
 				1E3BB3AC68E093471056390F /* Core */,
+				558D954264752E87AA384F07 /* Tunnel */,
 				7FA5D56208652A71617B8B27 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		558D954264752E87AA384F07 /* Tunnel */ = {
+			isa = PBXGroup;
+			children = (
+				7C125862B181B4558B23FDDB /* Info.plist */,
+				2B4E0A2BC34651A60C519074 /* PacketTunnelProvider.swift */,
+				EF33CCEDDA0CF15F63EC9A47 /* TeslaMirrorTunnel.entitlements */,
+			);
+			path = Tunnel;
 			sourceTree = "<group>";
 		};
 		7FA5D56208652A71617B8B27 /* Products */ = {
@@ -160,6 +188,7 @@
 			children = (
 				1178A3A8019479E61B452A89 /* TeslaMirror.app */,
 				D634B6B58D5E09DF158E2A65 /* TeslaMirrorBroadcast.appex */,
+				DA015A1B5168DF9FDEBD63BC /* TeslaMirrorTunnel.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -178,6 +207,7 @@
 			);
 			dependencies = (
 				07C0ED12521E1A78DCE67764 /* PBXTargetDependency */,
+				CB6ED177FB5DA17D8F65E4E6 /* PBXTargetDependency */,
 			);
 			name = TeslaMirror;
 			packageProductDependencies = (
@@ -204,6 +234,23 @@
 			productReference = D634B6B58D5E09DF158E2A65 /* TeslaMirrorBroadcast.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		F20267FB5F3BEA7695664BCC /* TeslaMirrorTunnel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4320D1B81AC43E2C1F482142 /* Build configuration list for PBXNativeTarget "TeslaMirrorTunnel" */;
+			buildPhases = (
+				7951E06FC1DDCBF2833B0159 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TeslaMirrorTunnel;
+			packageProductDependencies = (
+			);
+			productName = TeslaMirrorTunnel;
+			productReference = DA015A1B5168DF9FDEBD63BC /* TeslaMirrorTunnel.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -218,6 +265,10 @@
 						ProvisioningStyle = Automatic;
 					};
 					397FF30AD8C19B486C0F10A8 = {
+						DevelopmentTeam = CSQ565C7YY;
+						ProvisioningStyle = Automatic;
+					};
+					F20267FB5F3BEA7695664BCC = {
 						DevelopmentTeam = CSQ565C7YY;
 						ProvisioningStyle = Automatic;
 					};
@@ -239,6 +290,7 @@
 			targets = (
 				05264515B5C10F831F134C00 /* TeslaMirror */,
 				397FF30AD8C19B486C0F10A8 /* TeslaMirrorBroadcast */,
+				F20267FB5F3BEA7695664BCC /* TeslaMirrorTunnel */,
 			);
 		};
 /* End PBXProject section */
@@ -274,6 +326,15 @@
 				F23B273972042EF3842F7976 /* SharedStatus.swift in Sources */,
 				37AAFAD787DC0D5CB7D6FB00 /* TeslaMirrorApp.swift in Sources */,
 				D0787437B8648DCD1961ED3B /* TestServer.swift in Sources */,
+				36152A6B1AAF8728BEB3DA7F /* TunnelController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7951E06FC1DDCBF2833B0159 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CC25D6F925C6085F28306D0 /* PacketTunnelProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -304,9 +365,31 @@
 			target = 397FF30AD8C19B486C0F10A8 /* TeslaMirrorBroadcast */;
 			targetProxy = B6B4B9127EB25C6EDA49C0F9 /* PBXContainerItemProxy */;
 		};
+		CB6ED177FB5DA17D8F65E4E6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F20267FB5F3BEA7695664BCC /* TeslaMirrorTunnel */;
+			targetProxy = AD6AAA900C4CDF3BCA6865C8 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		1B7BB073024E0D9E2DE4B7EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Tunnel/TeslaMirrorTunnel.entitlements;
+				INFOPLIST_FILE = Tunnel/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).TeslaMirror.Tunnel";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		1FD6AF6204DEF48FE41E23BB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -393,6 +476,23 @@
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
+		};
+		7EEFB69D031743B48AEF3973 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Tunnel/TeslaMirrorTunnel.entitlements;
+				INFOPLIST_FILE = Tunnel/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID_PREFIX).TeslaMirror.Tunnel";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
 		};
 		87C6F23A048430943717F520 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -511,6 +611,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		4320D1B81AC43E2C1F482142 /* Build configuration list for PBXNativeTarget "TeslaMirrorTunnel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1B7BB073024E0D9E2DE4B7EA /* Debug */,
+				7EEFB69D031743B48AEF3973 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		4F061F781B7F904D428F51AF /* Build configuration list for PBXProject "TeslaMirror" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

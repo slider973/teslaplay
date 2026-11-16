@@ -34,7 +34,7 @@ struct PlexSettingsView: View {
                     Button("Changer de serveur") { Task { await plex.loadServers() } }
                     Button("Se déconnecter", role: .destructive) { plex.disconnect() }
                 } footer: {
-                    Text("Dans la voiture : http://172.20.10.1:8080 › Plex. La diffusion TeslaMirror doit être active. Le serveur Plex doit être accessible à distance (Plex › Réglages › Accès à distance).")
+                    Text("Dans la voiture : http://100.99.9.9:8080 › Plex. La diffusion et l'accès Tesla doivent être actifs. Le serveur Plex doit être accessible à distance (Plex › Réglages › Accès à distance).")
                 }
             case .error(let message):
                 Section {

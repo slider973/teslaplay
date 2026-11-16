@@ -31,7 +31,7 @@ struct JellyfinSettingsView: View {
                         connected = nil
                     }
                 } footer: {
-                    Text("Dans la voiture : http://172.20.10.1:8080 › Jellyfin. La diffusion TeslaMirror doit être active, et le serveur Jellyfin joignable depuis internet.")
+                    Text("Dans la voiture : http://100.99.9.9:8080 › Jellyfin. La diffusion et l'accès Tesla doivent être actifs, et le serveur Jellyfin joignable depuis internet.")
                 }
             } else if let code = quickCode {
                 Section {

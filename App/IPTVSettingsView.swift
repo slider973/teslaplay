@@ -52,7 +52,7 @@ struct IPTVSettingsView: View {
                 if !summary.isEmpty { Text(summary).foregroundStyle(.secondary) }
                 if let error { Text(error).foregroundStyle(.red) }
             } footer: {
-                Text("Dans la voiture : http://172.20.10.1:8080 › TV. La diffusion TeslaMirror doit être active : c'est l'iPhone qui relaie les flux.")
+                Text("Dans la voiture : http://100.99.9.9:8080 › TV. La diffusion et l'accès Tesla doivent être actifs : c'est l'iPhone qui relaie les flux.")
             }
 
             Section {
