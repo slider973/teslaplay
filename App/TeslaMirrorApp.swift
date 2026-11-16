@@ -6,6 +6,7 @@ struct TeslaMirrorApp: App {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(.dark)
+                .tint(Theme.accent)
         }
     }
 }
